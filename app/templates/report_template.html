@@ -100,10 +100,13 @@
 
     <h2>ACADEMIC SUMMARY</h2>
     <ul class="no-bullet">
+        {% if certificates %}
         <li><strong>Institution:</strong> {{ student.InstitutionName }}</li>
         <li><strong>Course:</strong> {{ student.CourseName }}</li>
         <li><strong>Current Year:</strong> {{ student.Batch }}</li>
+        {% if certificates student.CGPA %}
         <li><strong>CGPA:</strong> {{ student.CGPA }}</li>
+        {% endfor %}
 
         <li><strong>Major Subjects:</strong>
             {% for subject in student.StudentMajorCourseDetailsForPortfolioData %}
@@ -128,8 +131,8 @@
     <ul>
         {% for cert in certificates %}
         <li>
-            <strong>{{ cert.Title }}</strong><br>
-            {{ cert.Organization }}
+            <strong>{{ cert.Title }}  {% if cert.Organization %} - {{ cert.Organization }}{% endif %}</strong><br>
+           {{ cert.Description }}
         </li>
         {% endfor %}
     </ul>
@@ -140,7 +143,7 @@
     <ul>
         {% for intern in internships %}
         <li>
-            <strong>{{ intern.Title }} | {{ intern.Organization }} ({{ intern.formatted_date_range }})</strong>
+            <strong>{{ intern.Title }} | {{ intern.Organization }} ({{ intern.formatted_date_range }}) {% if intern.Organization %} - {{ intern.Organization }}{% endif %}</strong>
             <p>{{ intern.Description }}</p>
         </li>
         {% endfor %}
@@ -152,7 +155,7 @@
     <ul>
         {% for proj in projects %}
         <li>
-            <strong>{{ proj.Title }}</strong>
+            <strong>{{ proj.Title }} {% if proj.Organization %} - {{ proj.Organization }}{% endif %} </strong>
             <p>{{ proj.Description }}</p>
         </li>
         {% endfor %}
