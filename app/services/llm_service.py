@@ -1,11 +1,13 @@
-# app/services/llm_service.py
 import json
+from datetime import datetime
 from openai import AsyncOpenAI
 import google.generativeai as genai
+
 from app.core.config import settings
 from app.models.report import StudentPortfolioInput, AIContentOutput
 from app.core.logging_config import app_logger, error_logger
 
+# --- Client Initializations ---
 openai_client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
 deepseek_client = AsyncOpenAI(api_key=settings.DEEPSEEK_API_KEY, base_url="https://api.deepseek.com/v1")
 
@@ -13,20 +15,45 @@ if settings.GEMINI_API_KEY:
     genai.configure(api_key=settings.GEMINI_API_KEY)
     gemini_model = genai.GenerativeModel(settings.GEMINI_MODEL_NAME)
 
+def format_date_for_prompt(date_str: str) -> str:
+    """Helper to make dates readable for the AI (e.g., '2023-06' -> 'Jun 2023')"""
+    if not date_str:
+        return ""
+    try:
+        dt = datetime.fromisoformat(date_str)
+        return dt.strftime("%b %Y")
+    except ValueError:
+        return date_str
+
 def get_portfolio_prompt(data: StudentPortfolioInput) -> str:
-    # --- 1. Extract ALL Data (Previously some were missing) ---
+    # --- 1. Extract & Format Data ---
     
-    # Separate Projects, Internships, and Certs
     projects = []
     internships = []
     certs = []
+    
     for item in data.StudentProjectInternshipCertificationDetailsForPortfolio:
-        entry = f"{item.Title} ({item.Organization}): {item.Description}"
+        # Format Dates
+        start = format_date_for_prompt(item.FromDate)
+        end = format_date_for_prompt(item.ToDate)
+        date_str = f"{start} - {end}" if start and end else ""
+        
+        # Build specific strings for AI context
         if item.Type == 'Project':
+            # Add (Major/Minor) to title if present
+            subtype = f" ({item.SubType})" if item.SubType and item.SubType.lower() != "none" else ""
+            title = f"{item.Title}{subtype}"
+            # Entry format: "Smart Attendance (Major): Description"
+            entry = f"{title}: {item.Description}"
             projects.append(entry)
+            
         elif item.Type == 'Internship':
+            # Entry format: "Intern at Google (Jun 2023 - Aug 2023): Description"
+            entry = f"{item.Title} at {item.Organization} ({date_str}): {item.Description}"
             internships.append(entry)
+            
         elif item.Type == 'Certificate':
+            entry = f"{item.Title} by {item.Organization}"
             certs.append(entry)
 
     # Academic Details
@@ -49,7 +76,6 @@ def get_portfolio_prompt(data: StudentPortfolioInput) -> str:
             if cat.result_type == 'marks':
                 details.append(f"{sec.section}: {sec.student_score}/{sec.total_mark}")
             elif sec.responses:
-                # Summarize subjective responses for the AI
                 q_a = [f"Q:{r['question']}->A:{r['selected_option']}" for r in sec.responses]
                 details.append(f"{sec.section} Answers: {'; '.join(q_a)}")
         psychometric_context.append(f"Category {cat.category}: {', '.join(details)}")
@@ -106,9 +132,13 @@ async def generate_ai_content(student_data: StudentPortfolioInput) -> AIContentO
     prompt = get_portfolio_prompt(student_data)
     model_name = student_data.model
     
+    app_logger.info(f"Generating AI content for {student_data.StudentName} using {model_name}")
+
     try:
         response_content = ""
         if model_name == "gemini":
+            if not settings.GEMINI_API_KEY:
+                 raise ValueError("GEMINI_API_KEY not found")
             response = await gemini_model.generate_content_async(prompt, generation_config={"response_mime_type": "application/json"})
             response_content = response.text.strip().removeprefix("```json").removesuffix("```")
         elif model_name == "openai":
@@ -118,10 +148,18 @@ async def generate_ai_content(student_data: StudentPortfolioInput) -> AIContentO
                 response_format={"type": "json_object"}
             )
              response_content = response.choices[0].message.content
+        elif model_name == "deepseek":
+             response = await deepseek_client.chat.completions.create(
+                model=settings.DEEPSEEK_MODEL_NAME, 
+                messages=[{"role": "user", "content": prompt}], 
+                response_format={"type": "json_object"}
+            )
+             response_content = response.choices[0].message.content
         
         return AIContentOutput(**json.loads(response_content))
     except Exception as e:
         error_logger.error(f"AI Generation failed: {e}")
+        # Fallback to prevent PDF crash
         return AIContentOutput(
             career_objective="Seeking opportunities to leverage my skills.",
             portfolio_summary="Dedicated student with a strong academic background.",

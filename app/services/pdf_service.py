@@ -19,46 +19,49 @@ REPORTS_DIR = "static/reports"
 
 def format_date(date_str: str) -> str:
     """
-    Converts ISO date strings to 'Month Year' format (e.g., 'Jun 2023').
-    Includes logic to fix common data typos (like 2023-08:25 -> 2023-08-25).
+    Converts ISO date '2023-06-01T00:00:00' to 'Jun 2023'.
+    Robustly handles typos like '2023-08:25' (colon instead of hyphen).
     """
     if not date_str:
         return ""
     
+    # --- FIX: Sanitize common typos ---
+    # The user input had '2023-08:25', replacing colons in the date part (first 10 chars)
+    clean_date = date_str
+    if len(date_str) >= 10:
+        date_part = date_str[:10].replace(':', '-')
+        clean_date = date_part + date_str[10:]
+        
     try:
-        # 1. Try standard parsing
-        dt = datetime.fromisoformat(date_str)
+        dt = datetime.fromisoformat(clean_date)
         return dt.strftime("%b %Y")
     except ValueError:
-        try:
-            # 2. Fallback: Fix dirty data (e.g., "2023-08:25" typo in input)
-            # Remove time component and fix separators
-            clean_date = date_str.split('T')[0].replace(':', '-')
-            dt = datetime.fromisoformat(clean_date)
-            return dt.strftime("%b %Y")
-        except ValueError:
-            # 3. If completely unparseable, return original so data isn't lost
-            return date_str
+        # If it still fails, return original so we don't crash
+        return date_str
 
 def save_pdf_report(student_data: StudentPortfolioInput, ai_content: AIContentOutput) -> str:
+    """
+    Prepares data, formatting dates and titles, then generates the PDF.
+    """
     # --- 1. Bucketing & Formatting Logic ---
     projects = []
     internships = []
     certificates = []
 
     for item in student_data.StudentProjectInternshipCertificationDetailsForPortfolio:
+        # Convert Pydantic model to dict so we can modify fields
         item_dict = item.model_dump()
         
-        # Format the dates
+        # Format the dates (e.g., "Jun 2023 - Aug 2023")
         start = format_date(item.FromDate)
         end = format_date(item.ToDate)
         item_dict['formatted_date_range'] = f"{start} - {end}"
 
+        # Sort into categories and apply specific formatting
         if item.Type == "Project":
-            # Add (Major/Minor) to title if it exists
+            # Append SubType (Major/Minor) to the Title if valid
             if item.SubType and item.SubType.lower() != "none":
-                # Capitalize nicely: "major" -> "Major"
-                item_dict['Title'] = f"{item.Title} ({item.SubType.capitalize()})"
+                item_dict['Title'] = f"{item.Title} ({item.SubType})"
             projects.append(item_dict)
 
         elif item.Type == "Internship":
@@ -67,7 +70,7 @@ def save_pdf_report(student_data: StudentPortfolioInput, ai_content: AIContentOu
         elif item.Type == "Certificate":
             certificates.append(item_dict)
 
-    # --- 2. Prepare Context ---
+    # --- 2. Prepare Context for Jinja2 ---
     context = {
         "student": student_data,
         "ai": ai_content,
@@ -98,6 +101,7 @@ def save_pdf_report(student_data: StudentPortfolioInput, ai_content: AIContentOu
         with open(file_path, 'wb') as f:
             f.write(pdf_bytes)
 
+        # Return the URL path
         return f"static/reports/{filename}"
         
     except Exception as e:
@@ -105,6 +109,9 @@ def save_pdf_report(student_data: StudentPortfolioInput, ai_content: AIContentOu
         raise
 
 async def generate_portfolio_pdf_async(student_data: StudentPortfolioInput, ai_content: AIContentOutput) -> str:
+    """
+    Async wrapper to run the blocking PDF generation in a separate thread.
+    """
     loop = asyncio.get_running_loop()
     url = await loop.run_in_executor(executor, save_pdf_report, student_data, ai_content)
     return url
