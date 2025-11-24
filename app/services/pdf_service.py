@@ -10,6 +10,7 @@ from concurrent.futures import ThreadPoolExecutor
 from app.models.report import StudentPortfolioInput, AIContentOutput
 from app.core.logging_config import error_logger
 
+# Set up Jinja2 environment
 env = Environment(loader=FileSystemLoader("app/templates"))
 template = env.get_template("report_template.html")
 executor = ThreadPoolExecutor()
@@ -17,35 +18,56 @@ executor = ThreadPoolExecutor()
 REPORTS_DIR = "static/reports"
 
 def format_date(date_str: str) -> str:
-    """Converts ISO date '2024-06-01T00:00:00' to 'Jun 2024'."""
+    """
+    Converts ISO date strings to 'Month Year' format (e.g., 'Jun 2023').
+    Includes logic to fix common data typos (like 2023-08:25 -> 2023-08-25).
+    """
+    if not date_str:
+        return ""
+    
     try:
+        # 1. Try standard parsing
         dt = datetime.fromisoformat(date_str)
         return dt.strftime("%b %Y")
-    except:
-        return date_str # Return original if parse fails
+    except ValueError:
+        try:
+            # 2. Fallback: Fix dirty data (e.g., "2023-08:25" typo in input)
+            # Remove time component and fix separators
+            clean_date = date_str.split('T')[0].replace(':', '-')
+            dt = datetime.fromisoformat(clean_date)
+            return dt.strftime("%b %Y")
+        except ValueError:
+            # 3. If completely unparseable, return original so data isn't lost
+            return date_str
 
 def save_pdf_report(student_data: StudentPortfolioInput, ai_content: AIContentOutput) -> str:
-    # 1. Bucketing Logic with Date Formatting
+    # --- 1. Bucketing & Formatting Logic ---
     projects = []
     internships = []
     certificates = []
 
     for item in student_data.StudentProjectInternshipCertificationDetailsForPortfolio:
-        # Create a dict to allow adding the 'formatted_date_range' field
         item_dict = item.model_dump()
         
-        # Format dates
+        # Format the dates
         start = format_date(item.FromDate)
         end = format_date(item.ToDate)
         item_dict['formatted_date_range'] = f"{start} - {end}"
 
         if item.Type == "Project":
+            # Add (Major/Minor) to title if it exists
+            if item.SubType and item.SubType.lower() != "none":
+                # Capitalize nicely: "major" -> "Major"
+                item_dict['Title'] = f"{item.Title} ({item.SubType.capitalize()})"
             projects.append(item_dict)
+
         elif item.Type == "Internship":
             internships.append(item_dict)
+
         elif item.Type == "Certificate":
             certificates.append(item_dict)
 
+    # --- 2. Prepare Context ---
     context = {
         "student": student_data,
         "ai": ai_content,
@@ -54,8 +76,10 @@ def save_pdf_report(student_data: StudentPortfolioInput, ai_content: AIContentOu
         "certificates": certificates,
     }
 
+    # --- 3. Render HTML ---
     html_out = template.render(context)
 
+    # --- 4. Generate PDF ---
     try:
         pdf_bytes = pdfkit.from_string(html_out, False, options={
             "enable-local-file-access": "",

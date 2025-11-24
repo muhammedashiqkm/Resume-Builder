@@ -1,28 +1,91 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ student.StudentName }} - Portfolio</title>
     <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; margin: 0 auto; padding: 20px; max-width: 800px; color: #333; }
-        h1, h2, h3 { border-bottom: 2px solid #eee; padding-bottom: 5px; margin-top: 25px; }
-        h1 { text-align: center; font-size: 2em; margin-bottom: 30px; }
-        h2 { font-size: 1.5em; color: #444; text-transform: uppercase; letter-spacing: 1px; }
-        p, li { font-size: 1em; margin-bottom: 10px; }
-        strong { color: #000; }
-        ul { padding-left: 20px; }
-        blockquote { font-style: italic; background: #f9f9f9; border-left: 5px solid #ccc; padding: 10px 15px; margin-left: 0; }
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0 auto;
+            padding: 20px;
+            max-width: 800px;
+            color: #333;
+        }
+
+        h1,
+        h2,
+        h3 {
+            border-bottom: 2px solid #eee;
+            padding-bottom: 5px;
+            margin-top: 25px;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2em;
+            margin-bottom: 30px;
+        }
+
+        h2 {
+            font-size: 1.5em;
+            color: #444;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        p,
+        li {
+            font-size: 1em;
+            margin-bottom: 10px;
+        }
+
+        strong {
+            color: #000;
+        }
+
+        ul {
+            padding-left: 20px;
+        }
+
+        blockquote {
+            font-style: italic;
+            background: #f9f9f9;
+            border-left: 5px solid #ccc;
+            padding: 10px 15px;
+            margin-left: 0;
+        }
+
         /* Table Styling */
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.9em; }
-        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; vertical-align: top; }
-        th { background-color: #f2f2f2; font-weight: bold; }
-        .no-bullet { list-style-type: none; padding-left: 0; }
-        /* Skill Tag Styling */
-        .skill-group { margin-bottom: 15px; }
-        .skill-tag { background-color: #eef; color: #335; padding: 3px 8px; border-radius: 4px; font-size: 0.95em; margin-right: 5px; display: inline-block; margin-bottom: 5px;}
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 0.9em;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+
+        .no-bullet {
+            list-style-type: none;
+            padding-left: 0;
+        }
     </style>
 </head>
+
 <body>
 
     <h1>STUDENT PORTFOLIO</h1>
@@ -30,7 +93,7 @@
     <h2>PERSONAL INFORMATION</h2>
     <p><strong>Name:</strong> {{ student.StudentName }}</p>
     <p><strong>Email:</strong> {{ student.Email }}</p>
-    
+
 
     <h2>CAREER OBJECTIVE (AI-Generated)</h2>
     <blockquote>"{{ ai.career_objective }}"</blockquote>
@@ -41,20 +104,24 @@
         <li><strong>Course:</strong> {{ student.CourseName }}</li>
         <li><strong>Current Year:</strong> {{ student.Batch }}</li>
         <li><strong>CGPA:</strong> {{ student.CGPA }}</li>
+
+        <li><strong>Major Subjects:</strong>
+            {% for subject in student.StudentMajorCourseDetailsForPortfolioData %}
+            {{ subject.PaperName }}{% if not loop.last %}, {% endif %}
+            {% endfor %}
+        </li>
+
         <li><strong>Course Outcomes:</strong> {{ ai.course_outcomes_sentence }}</li>
     </ul>
 
     <h2>SKILLS</h2>
-    <div class="skills-container">
+    <ul class="no-bullet">
         {% for category, skills in ai.skills_grouped.items() %}
-        <div class="skill-group">
-            <strong>{{ category }}:</strong>
-            {% for skill in skills %}
-                <span class="skill-tag">{{ skill }}</span>
-            {% endfor %}
-        </div>
+        <li>
+            <strong>{{ category }}:</strong> {{ skills | join(', ') }}
+        </li>
         {% endfor %}
-    </div>
+    </ul>
 
     {% if certificates %}
     <h2>CERTIFICATIONS</h2>
@@ -123,4 +190,5 @@
     <blockquote>"{{ ai.portfolio_summary }}"</blockquote>
 
 </body>
+
 </html>
