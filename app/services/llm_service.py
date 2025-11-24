@@ -87,8 +87,8 @@ def get_portfolio_prompt(data: StudentPortfolioInput) -> str:
       "portfolio_summary": "string (Third-person, ~60 words. A professional bio highlighting their specific skills, clubs, and academic focus.)",
       "course_outcomes_sentence": "string (A single sentence starting with 'Demonstrated proficiency in...', listing the outcomes. Ensure the last item is preceded by 'and'.)",
       "skills_grouped": {
-          "Category Name": ["skill1", "skill2"]
-      } (Categorize the 'Abilities' and extract hard tools/skills from 'Projects', 'Internships' and 'Major Papers'. e.g., 'Technical', 'Soft Skills', 'Domain Knowledge'),
+          "<CategoryName>": ["skill1", "skill2", "..."]
+      } 
       "achievements_activities_formatted": [
           "string"
       ] (Generate impressive bullet points from Achievements, Activities, and Clubs),
@@ -96,7 +96,7 @@ def get_portfolio_prompt(data: StudentPortfolioInput) -> str:
         {
             "category": "string (The category name from input)",
             "description": "string (What this category measures based on the specific questions/scores provided)",
-            "representation": "string (Suggest a visualization)"
+            "representation": "string (1–2 sentences, concise, student-specific)"
         }
       ]
     }
@@ -120,8 +120,21 @@ def get_portfolio_prompt(data: StudentPortfolioInput) -> str:
 
     **Instructions:**
     1. **Career Objective:** Must reflect the mix of their *Major Papers* (e.g., History/Media) AND their *Internship* experience.
-    2. **Skills:** Extract "Domain Knowledge" (e.g., Journalism, History) from the *Major Papers* list.
-    3. **Psychometric Table:** Use the actual scores/answers provided in the context to write a specific description for the table rows.
+    2. Skills:
+    Analyze the student's data (Major Papers, Projects, Internships, Abilities, Certificates)
+    and group detected skills into meaningful categories chosen by you (the LLM).
+    • Decide which category each skill belongs to (do not use a fixed list).
+    • Keep category names short (e.g., "Technical", "Domain Knowledge", "Tools", "Soft Skills").
+    • Put each skill under the most appropriate category. Avoid duplicates.
+    3. Psychometric Table:
+    For each psychometric category, write a short, student-specific explanation.
+    • "representation" must be only 1–2 concise sentences.
+    • Use the student’s actual section scores or response patterns.
+    • Keep the wording simple, clear, and easy to read.
+    • Avoid generic statements like "bar chart showing scores."
+    Example: "Strong quantitative skills with 17/20, good reasoning with 13/15."
+
+
 
     **Output strictly JSON:**
     {schema}
