@@ -2,68 +2,125 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>AI-Generated Report for {{ portfolio.name }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ student.StudentName }} - Portfolio</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap');
-        body { font-family: 'Lato', Arial, sans-serif; line-height: 1.6; color: #333; background-color: #f9f9f9; max-width: 8.5in; margin: 0 auto; padding: 0.5in; }
-        .report-container { background-color: #ffffff; padding: 40px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-        .report-header { text-align: center; border-bottom: 2px solid #0056b3; padding-bottom: 15px; margin-bottom: 30px; }
-        .report-header h1 { font-size: 28px; color: #0056b3; margin: 0; }
-        .report-header p { font-size: 16px; color: #555; margin: 5px 0 0 0; }
-        .section { margin-bottom: 35px; }
-        .section-title { font-size: 20px; font-weight: 700; color: #004085; border-bottom: 1px solid #e0e0e0; padding-bottom: 8px; margin-bottom: 15px; }
-        .summary-box { background-color: #e9f5ff; border-left: 5px solid #0056b3; padding: 15px 20px; margin-bottom: 20px; color: #313131; }
-        .skills-summary { font-style: italic; }
-        .assessment-card { border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin-bottom: 20px; background-color: #fff; }
-        .assessment-card h4 { font-size: 18px; color: #333; margin-top: 0; margin-bottom: 10px; }
-        .report-footer { text-align: center; margin-top: 40px; font-size: 12px; color: #888; }
+        body { font-family: Arial, sans-serif; line-height: 1.6; margin: 0 auto; padding: 20px; max-width: 800px; color: #333; }
+        h1, h2, h3 { border-bottom: 2px solid #eee; padding-bottom: 5px; margin-top: 25px; }
+        h1 { text-align: center; font-size: 2em; margin-bottom: 30px; }
+        h2 { font-size: 1.5em; color: #444; text-transform: uppercase; letter-spacing: 1px; }
+        p, li { font-size: 1em; margin-bottom: 10px; }
+        strong { color: #000; }
+        ul { padding-left: 20px; }
+        blockquote { font-style: italic; background: #f9f9f9; border-left: 5px solid #ccc; padding: 10px 15px; margin-left: 0; }
+        /* Table Styling */
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.9em; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; vertical-align: top; }
+        th { background-color: #f2f2f2; font-weight: bold; }
+        .no-bullet { list-style-type: none; padding-left: 0; }
+        /* Skill Tag Styling */
+        .skill-group { margin-bottom: 15px; }
+        .skill-tag { background-color: #eef; color: #335; padding: 3px 8px; border-radius: 4px; font-size: 0.95em; margin-right: 5px; display: inline-block; margin-bottom: 5px;}
     </style>
 </head>
 <body>
-    <div class="report-container">
-        <header class="report-header">
-            <h1>AI-Generated Student Report</h1>
-            <p><strong>{{ portfolio.name }}</strong></p>
-        </header>
 
-        <section class="section">
-            <h2 class="section-title">Profile Summary</h2>
-            <div class="summary-box">
-                <p>{{ portfolio.profile_summary }}</p>
-            </div>
-        </section>
-        
-        <section class="section">
-             <h2 class="section-title">Academic Snapshot</h2>
-             <p>{{ portfolio.academic_snapshot }}</p>
-        </section>
+    <h1>STUDENT PORTFOLIO</h1>
 
-        <section class="section">
-            <h2 class="section-title">Skillset Overview</h2>
-            <p class="skills-summary">{{ portfolio.skillset.summary }}</p>
-        </section>
-        
-        <section class="section">
-            <h2 class="section-title">Assessment Overview</h2>
-            <div class="summary-box">
-                 <p>{{ portfolio.assessment_overview.summary }}</p>
-            </div>
-            {% for item in portfolio.assessment_overview.breakdown %}
-            <article class="assessment-card">
-                <h4>{{ item.category }}</h4>
-                <p>{{ item.interpretation }}</p>
-            </article>
+    <h2>PERSONAL INFORMATION</h2>
+    <p><strong>Name:</strong> {{ student.StudentName }}</p>
+    <p><strong>Email:</strong> {{ student.Email }}</p>
+    
+
+    <h2>CAREER OBJECTIVE (AI-Generated)</h2>
+    <blockquote>"{{ ai.career_objective }}"</blockquote>
+
+    <h2>ACADEMIC SUMMARY</h2>
+    <ul class="no-bullet">
+        <li><strong>Institution:</strong> {{ student.InstitutionName }}</li>
+        <li><strong>Course:</strong> {{ student.CourseName }}</li>
+        <li><strong>Current Year:</strong> {{ student.Batch }}</li>
+        <li><strong>CGPA:</strong> {{ student.CGPA }}</li>
+        <li><strong>Course Outcomes:</strong> {{ ai.course_outcomes_sentence }}</li>
+    </ul>
+
+    <h2>SKILLS</h2>
+    <div class="skills-container">
+        {% for category, skills in ai.skills_grouped.items() %}
+        <div class="skill-group">
+            <strong>{{ category }}:</strong>
+            {% for skill in skills %}
+                <span class="skill-tag">{{ skill }}</span>
             {% endfor %}
-        </section>
-
-        <section class="section">
-            <h2 class="section-title">Career Recommendation</h2>
-            <p>{{ portfolio.career_recommendation }}</p>
-        </section>
-
-        <footer class="report-footer">
-            Report Generated on {{ generation_date }}.
-        </footer>
+        </div>
+        {% endfor %}
     </div>
+
+    {% if certificates %}
+    <h2>CERTIFICATIONS</h2>
+    <ul>
+        {% for cert in certificates %}
+        <li>
+            <strong>{{ cert.Title }}</strong><br>
+            {{ cert.Organization }}
+        </li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    {% if internships %}
+    <h2>INTERNSHIPS & INDUSTRY EXPERIENCE</h2>
+    <ul>
+        {% for intern in internships %}
+        <li>
+            <strong>{{ intern.Title }} | {{ intern.Organization }} ({{ intern.formatted_date_range }})</strong>
+            <p>{{ intern.Description }}</p>
+        </li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    {% if projects %}
+    <h2>PROJECTS</h2>
+    <ul>
+        {% for proj in projects %}
+        <li>
+            <strong>{{ proj.Title }}</strong>
+            <p>{{ proj.Description }}</p>
+        </li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    <h2>ACHIEVEMENTS & ACTIVITIES</h2>
+    <ul>
+        {% for item in ai.achievements_activities_formatted %}
+        <li>{{ item }}</li>
+        {% endfor %}
+    </ul>
+
+    <h2>PSYCHOMETRIC PROFILE</h2>
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 25%;">Category</th>
+                <th style="width: 35%;">Description</th>
+                <th style="width: 40%;">Representation</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in ai.psychometric_table_rows %}
+            <tr>
+                <td><strong>{{ row.category }}</strong></td>
+                <td>{{ row.description }}</td>
+                <td>{{ row.representation }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h2>PROFESSIONAL SUMMARY</h2>
+    <blockquote>"{{ ai.portfolio_summary }}"</blockquote>
+
 </body>
 </html>

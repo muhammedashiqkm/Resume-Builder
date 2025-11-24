@@ -2,12 +2,10 @@
 import json
 from openai import AsyncOpenAI
 import google.generativeai as genai
-
 from app.core.config import settings
-from app.models.report import StudentReportInput, AIReportOutput
+from app.models.report import StudentPortfolioInput, AIContentOutput
 from app.core.logging_config import app_logger, error_logger
 
-# --- Client Initializations ---
 openai_client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
 deepseek_client = AsyncOpenAI(api_key=settings.DEEPSEEK_API_KEY, base_url="https://api.deepseek.com/v1")
 
@@ -15,97 +13,87 @@ if settings.GEMINI_API_KEY:
     genai.configure(api_key=settings.GEMINI_API_KEY)
     gemini_model = genai.GenerativeModel(settings.GEMINI_MODEL_NAME)
 
-def get_report_prompt(student_data: StudentReportInput) -> str:
-    """Creates a sophisticated prompt to guide the AI in generating a detailed student analysis report."""
-    data_dict = student_data.model_dump()
-
-    # --- UPDATED: Smarter formatting for the new self_assessment structure ---
-    assessment_lines = []
-    for category in data_dict.get("self_assessment", []):
-        assessment_lines.append(f"\n### Category: {category['category']}")
-        for section in category.get("sections", []):
-            if section['result_type'] == 'marks':
-                score = section.get('student_score', 'N/A')
-                total = section.get('total_mark', 'N/A')
-                assessment_lines.append(f"- {section['section']}: Scored {score} out of {total}")
-            elif section['result_type'] == 'subjective':
-                assessment_lines.append(f"- {section['section']}:")
-                for response in section.get("responses", []):
-                    question = response.get('question', 'N/A')
-                    answer = response.get('selected_option', 'N/A')
-                    assessment_lines.append(f"  - Q: {question}")
-                    assessment_lines.append(f"    A: {answer}")
+def get_portfolio_prompt(data: StudentPortfolioInput) -> str:
+    # Context Preparation
+    projects = [f"{p.Title}: {p.Description}" for p in data.StudentProjectInternshipCertificationDetailsForPortfolio if p.Type == 'Project']
+    abilities = [f"{a.Ability} (Value: {a.Value})" for a in data.StudentAbilityDetailsForPortfolioData]
+    outcomes = [po.CourseOutCome for po in data.StudentPODetailsForPortfolioData]
     
-    self_assessment_text = "\n".join(assessment_lines)
-    # --- END OF UPDATE ---
+    # Combine Achievements & Activities for the list generation
+    achievements = [f"Achievement: {a.AchievementItem}, Level: {a.AchievementLevel}, Remarks: {a.Remarks}" for a in data.StudentAchievementDetailsForPortfolioData]
+    activities = [f"Activity: {act.Activity}" for act in data.StudentActivityDetailsForPortfolioData]
+    combined_activities = achievements + activities
 
-    all_marks = [subject['marks'] for semester in data_dict['semester_marks'] for subject in semester['subjects']]
-    cgpa = round((sum(all_marks) / len(all_marks) / 10), 2) if all_marks else 0
+    psychometric_cats = [cat.category for cat in data.StudentPsychometricDetailsForPortfolioData]
 
     schema = """
     {
-      "name": "string",
-      "profile_summary": "string (A 3-4 sentence holistic summary of the student)",
-      "academic_snapshot": "string (A single sentence summarizing degree, CGPA, and performance)",
-      "skillset": { "summary": "string (A 1-2 sentence summary of skills)", "tags": ["string", "..."] },
-      "assessment_overview": { "summary": "string (A 1-2 sentence summary of assessment findings)", "breakdown": [{ "category": "string", "interpretation": "string (AI's analysis)" }] },
-      "career_recommendation": "string (Recommend 2-3 specific career paths)"
+      "career_objective": "string (First-person, ~40 words)",
+      "portfolio_summary": "string (Third-person, ~60 words)",
+      "course_outcomes_sentence": "string (A single sentence starting with 'Demonstrated proficiency in...', listing the outcomes. Ensure the last item is preceded by 'and'.)",
+      "skills_grouped": {
+          "Category Name": ["skill1", "skill2"]
+      } (Categorize the 'StudentAbilityDetails' and extracted skills from 'Projects'. e.g., 'Technical Skills', 'Soft Skills', 'Tools'),
+      "achievements_activities_formatted": [
+          "string (e.g. 'Winner, National ERP Hackathon 2024 built an AI module...')", 
+          "string (e.g. 'Attended Workshop on AI in Education Systems - IIT Delhi')"
+      ] (Generate impressive one-line bullet points from the achievements/activities list),
+      "psychometric_table_rows": [
+        {
+            "category": "string (The category name from input)",
+            "description": "string (What this category measures)",
+            "representation": "string (How to represent it, e.g. 'Radar chart showing Openness, ...')"
+        }
+      ]
     }
     """
+
     prompt = f"""
-    You are an expert student career analyst. Generate a comprehensive, analytical report for a student based on the data provided. You MUST generate a single, valid JSON object that strictly follows the schema. Do not add extra text or explanations.
-
-    **JSON Schema to Follow:**
-    {schema}
-
-    **Analysis Instructions:**
-    1.  **profile_summary**: Write a compelling, holistic summary combining academics, skills, and assessment insights.
-    2.  **academic_snapshot**: Create a single string that includes the degree (assume 'Bachelor of Technology'), the calculated CGPA, and a brief comment on performance.
-    3.  **skillset**: From the 'skillset' list, generate a short summary and also reproduce the list in the 'tags' field.
-    4.  **assessment_overview**: Analyze the 'Self Assessment Data'. For each category, write a concise 'interpretation' for the 'breakdown'. Then, write an overall 'summary' of the findings.
-    5.  **career_recommendation**: Based on all available data, suggest 2-3 specific and suitable career roles for the student.
+    You are a professional Resume Writer. Transform the student's data into an ATS-friendly portfolio structure.
 
     **Student Data:**
-    - Name: {data_dict['name']}
-    - Calculated Overall CGPA: {cgpa}
-    - Skillset: {', '.join(data_dict['skillset'])}
-    - Self Assessment Data:
-    {self_assessment_text}
+    - Name: {data.StudentName}
+    - Course Outcomes: {'; '.join(outcomes)}
+    - Abilities & Projects: {'; '.join(abilities + projects)}
+    - Achievements/Activities: {'; '.join(combined_activities)}
+    - Psychometric Categories Available: {', '.join(psychometric_cats)}
+
+    **Specific Instructions:**
+    1. **Course Outcomes:** Combine the list into one fluent sentence using an Oxford comma (e.g., "A, B, and C").
+    2. **Skills:** Use the 'StudentAbilityDetails' as the primary source, but also extract hard skills from Project descriptions. Group them logically.
+    3. **Psychometric Table:** For each category listed in the input, explain what it is (Description) and suggest a visualization (Representation).
+
+    **Output strictly JSON:**
+    {schema}
     """
     return prompt
 
-async def _call_openai_compatible(client: AsyncOpenAI, model: str, prompt: str):
-    response = await client.chat.completions.create(model=model, messages=[{"role": "user", "content": prompt}], response_format={"type": "json_object"})
-    return response.choices[0].message.content
-
-async def _call_gemini(prompt: str):
-    if not settings.GEMINI_API_KEY:
-        raise ValueError("GEMINI_API_KEY is not configured.")
-    response = await gemini_model.generate_content_async(prompt, generation_config={"response_mime_type": "application/json"})
-    return response.text.strip().removeprefix("```json").removesuffix("```")
-
-async def generate_report_from_llm(student_data: StudentReportInput, model_name: str) -> AIReportOutput:
-    """Generates an analytical report using the dynamically provided model_name."""
-    prompt = get_report_prompt(student_data)
-    
-    app_logger.info(f"Generating AI report for {student_data.name} using model: {model_name}")
-    response_content = ""
+async def generate_ai_content(student_data: StudentPortfolioInput) -> AIContentOutput:
+    prompt = get_portfolio_prompt(student_data)
+    model_name = student_data.model
     
     try:
-        if model_name == "openai":
-            model_to_use = settings.OPENAI_MODEL_NAME
-            response_content = await _call_openai_compatible(openai_client, model_to_use , prompt)
-        elif model_name == "deepseek":
-            model_to_use = settings.DEEPSEEK_MODEL_NAME
-            response_content = await _call_openai_compatible(deepseek_client, model_to_use , prompt)
-        elif model_name == "gemini":
-            response_content = await _call_gemini(prompt)
-        else:
-            raise ValueError(f"Unsupported model: {model_name}")
-
-        validated_report = AIReportOutput(**json.loads(response_content))
-        app_logger.info(f"Successfully generated AI report for {student_data.name}")
-        return validated_report
+        response_content = ""
+        if model_name == "gemini":
+            response = await gemini_model.generate_content_async(prompt, generation_config={"response_mime_type": "application/json"})
+            response_content = response.text.strip().removeprefix("```json").removesuffix("```")
+        elif model_name == "openai":
+             response = await openai_client.chat.completions.create(
+                model=settings.OPENAI_MODEL_NAME, 
+                messages=[{"role": "user", "content": prompt}], 
+                response_format={"type": "json_object"}
+            )
+             response_content = response.choices[0].message.content
+        
+        return AIContentOutput(**json.loads(response_content))
     except Exception as e:
-        error_logger.error(f"Error with model {model_name}: {e}. Raw response: {response_content[:200]}")
-        raise
+        error_logger.error(f"AI Generation failed: {e}")
+        # Fallback
+        return AIContentOutput(
+            career_objective="Seeking opportunities.",
+            portfolio_summary="Dedicated student.",
+            course_outcomes_sentence="Demonstrated proficiency in core academic subjects.",
+            skills_grouped={"General": ["Communication", "Teamwork"]},
+            achievements_activities_formatted=["Participated in academic events."],
+            psychometric_table_rows=[]
+        )
