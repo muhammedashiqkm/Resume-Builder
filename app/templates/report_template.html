@@ -95,18 +95,17 @@
     <p><strong>Email:</strong> {{ student.Email }}</p>
 
 
-    <h2>CAREER OBJECTIVE (AI-Generated)</h2>
+    <h2>CAREER OBJECTIVE</h2>
     <blockquote>"{{ ai.career_objective }}"</blockquote>
 
     <h2>ACADEMIC SUMMARY</h2>
     <ul class="no-bullet">
-        {% if certificates %}
         <li><strong>Institution:</strong> {{ student.InstitutionName }}</li>
         <li><strong>Course:</strong> {{ student.CourseName }}</li>
         <li><strong>Current Year:</strong> {{ student.Batch }}</li>
-        {% if certificates student.CGPA %}
+        {% if student.CGPA %}
         <li><strong>CGPA:</strong> {{ student.CGPA }}</li>
-        {% endfor %}
+        {% endif %}
 
         <li><strong>Major Subjects:</strong>
             {% for subject in student.StudentMajorCourseDetailsForPortfolioData %}
@@ -131,8 +130,8 @@
     <ul>
         {% for cert in certificates %}
         <li>
-            <strong>{{ cert.Title }}  {% if cert.Organization %} - {{ cert.Organization }}{% endif %}</strong><br>
-           {{ cert.Description }}
+            <strong>{{ cert.Title }} {% if cert.Organization %} - {{ cert.Organization }}{% endif %}</strong><br>
+            {{ cert.Description }}
         </li>
         {% endfor %}
     </ul>
@@ -143,7 +142,8 @@
     <ul>
         {% for intern in internships %}
         <li>
-            <strong>{{ intern.Title }} | {{ intern.Organization }} ({{ intern.formatted_date_range }}) {% if intern.Organization %} - {{ intern.Organization }}{% endif %}</strong>
+            <strong>{{ intern.Title }} | {{ intern.Organization }} ({{ intern.formatted_date_range }}) {% if
+                intern.Organization %} - {{ intern.Organization }}{% endif %}</strong>
             <p>{{ intern.Description }}</p>
         </li>
         {% endfor %}
@@ -169,28 +169,42 @@
         {% endfor %}
     </ul>
 
-    <h2>PSYCHOMETRIC PROFILE</h2>
-    <table>
-        <thead>
-            <tr>
-                <th style="width: 25%;">Category</th>
-                <th style="width: 35%;">Description</th>
-                <th style="width: 40%;">Representation</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for row in ai.psychometric_table_rows %}
-            <tr>
-                <td><strong>{{ row.category }}</strong></td>
-                <td>{{ row.description }}</td>
-                <td>{{ row.representation }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <h2>CLUBS & ACTIVITIES</h2>
+    <ul>
+        {% for club in student.StudentClubDetailsForPortfolioData %}
+        <li>
+            <strong>{{ club.Club }}</strong>
+        </li>
+        {% endfor %}
+    </ul>
 
-    <h2>PROFESSIONAL SUMMARY</h2>
-    <blockquote>"{{ ai.portfolio_summary }}"</blockquote>
+        <h2>PSYCHOMETRIC PROFILE</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 30%;">Assessment Area</th>
+                    <th style="width: 35%;">Description</th>
+                    <th style="width: 35%;">Representation</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in ai.psychometric_table_rows %}
+                <tr>
+                    <td>
+                        <strong>{{ row.category }}</strong>
+                        <div style="font-size: 1em; color: #555; margin-top: 4px;">
+                            Section: {{ row.section }}
+                        </div>
+                    </td>
+                    <td>{{ row.description }}</td>
+                    <td>{{ row.representation }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <h2>PORTFOLIO SUMMARY</h2>
+        <blockquote>"{{ ai.portfolio_summary }}"</blockquote>
 
 </body>
 

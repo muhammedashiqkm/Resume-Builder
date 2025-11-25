@@ -77,6 +77,7 @@ class StudentPortfolioInput(BaseModel):
 
 class PsychometricRowAI(BaseModel):
     category: str
+    section: str       # <--- NEW FIELD ADDED HERE
     description: str
     representation: str
 
