@@ -1,4 +1,3 @@
-# app/api/auth.py
 from fastapi import APIRouter, HTTPException, status
 from app.core import security
 from app.core.config import settings

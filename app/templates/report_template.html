@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ student.StudentName }} - Portfolio</title>
+    <title>{{ student.student_name }} - Portfolio</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -91,8 +91,8 @@
     <h1>STUDENT PORTFOLIO</h1>
 
     <h2>PERSONAL INFORMATION</h2>
-    <p><strong>Name:</strong> {{ student.StudentName }}</p>
-    <p><strong>Email:</strong> {{ student.Email }}</p>
+    <p><strong>Name:</strong> {{ student.student_name }}</p>
+    <p><strong>Email:</strong> {{ student.email }}</p>
 
 
     <h2>CAREER OBJECTIVE</h2>
@@ -100,16 +100,16 @@
 
     <h2>ACADEMIC SUMMARY</h2>
     <ul class="no-bullet">
-        <li><strong>Institution:</strong> {{ student.InstitutionName }}</li>
-        <li><strong>Course:</strong> {{ student.CourseName }}</li>
-        <li><strong>Current Year:</strong> {{ student.Batch }}</li>
-        {% if student.CGPA %}
-        <li><strong>CGPA:</strong> {{ student.CGPA }}</li>
+        <li><strong>Institution:</strong> {{ student.institution_name }}</li>
+        <li><strong>Course:</strong> {{ student.course_name }}</li>
+        <li><strong>Current Year:</strong> {{ student.batch }}</li>
+        {% if student.cgpa %}
+        <li><strong>CGPA:</strong> {{ student.cgpa }}</li>
         {% endif %}
 
         <li><strong>Major Subjects:</strong>
-            {% for subject in student.StudentMajorCourseDetailsForPortfolioData %}
-            {{ subject.PaperName }}{% if not loop.last %}, {% endif %}
+            {% for subject in student.major_papers %}
+            {{ subject.paper_name }}{% if not loop.last %}, {% endif %}
             {% endfor %}
         </li>
 
@@ -130,8 +130,8 @@
     <ul>
         {% for cert in certificates %}
         <li>
-            <strong>{{ cert.Title }} {% if cert.Organization %} - {{ cert.Organization }}{% endif %}</strong><br>
-            {{ cert.Description }}
+            <strong>{{ cert.title }} {% if cert.organization %} - {{ cert.organization }}{% endif %}</strong><br>
+            {{ cert.description }}
         </li>
         {% endfor %}
     </ul>
@@ -142,9 +142,9 @@
     <ul>
         {% for intern in internships %}
         <li>
-            <strong>{{ intern.Title }} | {{ intern.Organization }} ({{ intern.formatted_date_range }}) {% if
-                intern.Organization %} - {{ intern.Organization }}{% endif %}</strong>
-            <p>{{ intern.Description }}</p>
+            <strong>{{ intern.title }} | {{ intern.organization }} ({{ intern.formatted_date_range }}) {% if
+                intern.organization %} - {{ intern.organization }}{% endif %}</strong>
+            <p>{{ intern.description }}</p>
         </li>
         {% endfor %}
     </ul>
@@ -155,8 +155,8 @@
     <ul>
         {% for proj in projects %}
         <li>
-            <strong>{{ proj.Title }} {% if proj.Organization %} - {{ proj.Organization }}{% endif %} </strong>
-            <p>{{ proj.Description }}</p>
+            <strong>{{ proj.title }} {% if proj.organization %} - {{ proj.organization }}{% endif %} </strong>
+            <p>{{ proj.description }}</p>
         </li>
         {% endfor %}
     </ul>
@@ -171,9 +171,9 @@
 
     <h2>CLUBS & ACTIVITIES</h2>
     <ul>
-        {% for club in student.StudentClubDetailsForPortfolioData %}
+        {% for club in student.club_details %}
         <li>
-            <strong>{{ club.Club }}</strong>
+            <strong>{{ club.club }}</strong>
         </li>
         {% endfor %}
     </ul>

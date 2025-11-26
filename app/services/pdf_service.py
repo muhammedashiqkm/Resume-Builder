@@ -1,76 +1,64 @@
 # app/services/pdf_service.py
 import pdfkit
 from jinja2 import Environment, FileSystemLoader
-from datetime import datetime
 import os
-import uuid
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 
 from app.models.report import StudentPortfolioInput, AIContentOutput
 from app.core.logging_config import error_logger
+from app.core.utils import format_date_str
 
-# Set up Jinja2 environment
+# Setup Jinja2
 env = Environment(loader=FileSystemLoader("app/templates"))
 template = env.get_template("report_template.html")
 executor = ThreadPoolExecutor()
 
 REPORTS_DIR = "static/reports"
+if not os.path.exists(REPORTS_DIR):
+    os.makedirs(REPORTS_DIR)
 
-def format_date(date_str: str) -> str:
+def sanitize_filename(text: str) -> str:
     """
-    Converts ISO date '2023-06-01T00:00:00' to 'Jun 2023'.
-    Robustly handles typos like '2023-08:25' (colon instead of hyphen).
+    Removes special characters to make strings safe for filenames.
+    Replaces spaces with underscores.
     """
-    if not date_str:
-        return ""
-    
-    # --- FIX: Sanitize common typos ---
-    # The user input had '2023-08:25', replacing colons in the date part (first 10 chars)
-    clean_date = date_str
-    if len(date_str) >= 10:
-        date_part = date_str[:10].replace(':', '-')
-        clean_date = date_part + date_str[10:]
-        
-    try:
-        dt = datetime.fromisoformat(clean_date)
-        return dt.strftime("%b %Y")
-    except ValueError:
-        # If it still fails, return original so we don't crash
-        return date_str
+    if not text:
+        return "unknown"
+    # Keep alphanumeric, underscores, hyphens. Replace spaces with _.
+    safe_text = "".join(c for c in text if c.isalnum() or c in " _-").strip()
+    return safe_text.replace(" ", "_")
 
 def save_pdf_report(student_data: StudentPortfolioInput, ai_content: AIContentOutput) -> str:
     """
-    Prepares data, formatting dates and titles, then generates the PDF.
+    Generates a PDF. 
+    Filename is based on Name + Institution + Email.
+    Writing to the same filename automatically overwrites the previous version.
     """
     # --- 1. Bucketing & Formatting Logic ---
     projects = []
     internships = []
     certificates = []
 
-    for item in student_data.StudentProjectInternshipCertificationDetailsForPortfolio:
-        # Convert Pydantic model to dict so we can modify fields
+    for item in student_data.details_list:
         item_dict = item.model_dump()
         
-        # Format the dates (e.g., "Jun 2023 - Aug 2023")
-        start = format_date(item.FromDate)
-        end = format_date(item.ToDate)
+        start = format_date_str(item.from_date)
+        end = format_date_str(item.to_date)
         item_dict['formatted_date_range'] = f"{start} - {end}"
 
-        # Sort into categories and apply specific formatting
-        if item.Type == "Project":
-            # Append SubType (Major/Minor) to the Title if valid
-            if item.SubType and item.SubType.lower() != "none":
-                item_dict['Title'] = f"{item.Title} ({item.SubType})"
+        if item.type == "Project":
+            if item.sub_type and item.sub_type.lower() != "none":
+                item_dict['title'] = f"{item.title} ({item.sub_type})"
             projects.append(item_dict)
 
-        elif item.Type == "Internship":
+        elif item.type == "Internship":
             internships.append(item_dict)
 
-        elif item.Type == "Certificate":
+        elif item.type == "Certificate":
             certificates.append(item_dict)
 
-    # --- 2. Prepare Context for Jinja2 ---
+    # --- 2. Prepare Context ---
     context = {
         "student": student_data,
         "ai": ai_content,
@@ -93,15 +81,26 @@ def save_pdf_report(student_data: StudentPortfolioInput, ai_content: AIContentOu
             "margin-left": "0.75in",
         })
         
-        safe_name = "".join(c for c in student_data.StudentName if c.isalnum() or c in " _-").rstrip()
-        unique_id = str(uuid.uuid4()).split('-')[0]
-        filename = f"{safe_name}_{unique_id}_Portfolio.pdf"
+        # --- NEW FILENAME LOGIC (Static & Unique) ---
+        
+        # 1. Sanitize the Name and Institution
+        safe_name = sanitize_filename(student_data.student_name)
+        safe_institute = sanitize_filename(student_data.institution_name)
+        
+        # 2. Sanitize Email (Replace @ and . to avoid filesystem issues)
+        # e.g., user@gmail.com -> user_at_gmail_com
+        safe_email = sanitize_filename(student_data.email.replace("@", "_at_").replace(".", "_"))
+
+        # 3. Combine: Name_Institute_Email.pdf
+        # Because there is no timestamp, this filename is constant for this user.
+        filename = f"{safe_name}_{safe_institute}_{safe_email}.pdf"
+        
         file_path = os.path.join(REPORTS_DIR, filename)
 
+        # 4. Write File (Overwrites existing file automatically)
         with open(file_path, 'wb') as f:
             f.write(pdf_bytes)
 
-        # Return the URL path
         return f"static/reports/{filename}"
         
     except Exception as e:
@@ -109,9 +108,6 @@ def save_pdf_report(student_data: StudentPortfolioInput, ai_content: AIContentOu
         raise
 
 async def generate_portfolio_pdf_async(student_data: StudentPortfolioInput, ai_content: AIContentOutput) -> str:
-    """
-    Async wrapper to run the blocking PDF generation in a separate thread.
-    """
     loop = asyncio.get_running_loop()
     url = await loop.run_in_executor(executor, save_pdf_report, student_data, ai_content)
     return url
