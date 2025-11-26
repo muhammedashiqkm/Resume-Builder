@@ -58,7 +58,7 @@ def get_portfolio_prompt(data: StudentPortfolioInput) -> str:
     for cat in data.psychometric_details:
         details = []
         for sec in cat.sections:
-            if cat.result_type == 'marks':
+            if cat.result_type == 'objective':
                 details.append(f"{sec.section}: {sec.student_score}/{sec.total_mark}")
             elif sec.responses:
                 q_a = [f"Q:{r.question}->A:{r.selected_option}" for r in sec.responses]
