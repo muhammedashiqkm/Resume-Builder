@@ -51,10 +51,13 @@ class AbilityDetail(BasePortfolioModel):
 
 class AchievementDetail(BasePortfolioModel):
     achievement_item: str = Field(..., alias="AchievementItem")
+    achievement_level: str = Field(..., alias="AchievementLevel")
+    achievement_date: str = Field(..., alias="AchievementDate")
     remarks: str = Field(..., alias="Remarks")
 
 class ActivityDetail(BasePortfolioModel):
     activity: str = Field(..., alias="Activity")
+    activity_date: str = Field(..., alias="ActivityDate")
 
 class StudentPortfolioInput(BasePortfolioModel):
     model: Literal["openai", "gemini", "deepseek"] = "gemini"

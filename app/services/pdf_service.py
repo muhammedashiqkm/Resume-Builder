@@ -1,4 +1,3 @@
-# app/services/pdf_service.py
 import pdfkit
 from jinja2 import Environment, FileSystemLoader
 import os
@@ -9,7 +8,6 @@ from app.models.report import StudentPortfolioInput, AIContentOutput
 from app.core.logging_config import error_logger
 from app.core.utils import format_date_str
 
-# Setup Jinja2
 env = Environment(loader=FileSystemLoader("app/templates"))
 template = env.get_template("report_template.html")
 executor = ThreadPoolExecutor()
@@ -25,7 +23,6 @@ def sanitize_filename(text: str) -> str:
     """
     if not text:
         return "unknown"
-    # Keep alphanumeric, underscores, hyphens. Replace spaces with _.
     safe_text = "".join(c for c in text if c.isalnum() or c in " _-").strip()
     return safe_text.replace(" ", "_")
 
@@ -35,7 +32,6 @@ def save_pdf_report(student_data: StudentPortfolioInput, ai_content: AIContentOu
     Filename is based on Name + Institution + Email.
     Writing to the same filename automatically overwrites the previous version.
     """
-    # --- 1. Bucketing & Formatting Logic ---
     projects = []
     internships = []
     certificates = []
@@ -58,7 +54,6 @@ def save_pdf_report(student_data: StudentPortfolioInput, ai_content: AIContentOu
         elif item.type == "Certificate":
             certificates.append(item_dict)
 
-    # --- 2. Prepare Context ---
     context = {
         "student": student_data,
         "ai": ai_content,
@@ -81,23 +76,18 @@ def save_pdf_report(student_data: StudentPortfolioInput, ai_content: AIContentOu
             "margin-left": "0.75in",
         })
         
-        # --- NEW FILENAME LOGIC (Static & Unique) ---
         
-        # 1. Sanitize the Name and Institution
+        
         safe_name = sanitize_filename(student_data.student_name)
+
         safe_institute = sanitize_filename(student_data.institution_name)
-        
-        # 2. Sanitize Email (Replace @ and . to avoid filesystem issues)
-        # e.g., user@gmail.com -> user_at_gmail_com
+
         safe_email = sanitize_filename(student_data.email.replace("@", "_at_").replace(".", "_"))
 
-        # 3. Combine: Name_Institute_Email.pdf
-        # Because there is no timestamp, this filename is constant for this user.
         filename = f"{safe_name}_{safe_institute}_{safe_email}.pdf"
         
         file_path = os.path.join(REPORTS_DIR, filename)
 
-        # 4. Write File (Overwrites existing file automatically)
         with open(file_path, 'wb') as f:
             f.write(pdf_bytes)
 

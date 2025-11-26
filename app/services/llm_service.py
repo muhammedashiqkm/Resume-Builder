@@ -17,8 +17,6 @@ if settings.GEMINI_API_KEY:
 
 def get_portfolio_prompt(data: StudentPortfolioInput) -> str:
     # --- 1. Extract & Format Data ---
-    # We use snake_case accessors here (data.details_list) because the Pydantic model 
-    # parses the CamelCase JSON into snake_case Python variables.
     
     projects = []
     internships = []
@@ -52,8 +50,8 @@ def get_portfolio_prompt(data: StudentPortfolioInput) -> str:
     abilities = [f"{a.ability} (Self-Rating: {a.value}%)" for a in data.ability_details]
     
     # Achievements
-    achievements = [f"Achievement: {a.achievement_item} ({a.remarks})" for a in data.achievement_details]
-    activities = [f"Activity: {act.activity}" for act in data.activity_details]
+    achievements = [f"Achievement: {a.achievement_item} Date:{format_date_str(a.achievement_date)} Achievement:{a.achievement_level} Remark:({a.remarks})" for a in data.achievement_details]
+    activities = [f"Activity: {act.activity} Date:{format_date_str(act.activity_date)}" for act in data.activity_details]
     
     # Psychometric Context
     psychometric_context = []
@@ -70,21 +68,21 @@ def get_portfolio_prompt(data: StudentPortfolioInput) -> str:
     # --- 2. Construct the Schema ---
     schema = """
     {
-      "career_objective": "string (3–4 lines, crisp and personalized. Reflect Major Papers + Projects + Internships + Certifications.)",
-      "portfolio_summary": "string (5–7 lines, holistic. Summarize academics, projects, internships, abilities, and activities.)",
+      "career_objective": "string (3-4 lines, crisp and personalized. Reflect Major Papers + Projects + Internships + Certifications.)",
+      "portfolio_summary": "string (5-7 lines, holistic. Summarize academics, projects, internships, abilities, and activities.)",
       "course_outcomes_sentence": "string (A single sentence starting with 'Demonstrated proficiency in...', listing the outcomes. Ensure the last item is preceded by 'and'.)",
       "skills_grouped": {
           "<CategoryName>": ["skill1", "skill2", "..."]
       },
       "achievements_activities_formatted": [
           "string"
-      ] (Generate impressive bullet points from Achievements, Activities, and Clubs),
+      ] (Generate impressive bullet points from Achievements and Activities),
       "psychometric_table_rows": [
         {
             "category": "string (The main category name, e.g., 'General Aptitude Test')",
             "section": "string (The specific sub-section, e.g., 'Quantitative Analysis' or 'Behavioral Assessment')",
             "description": "string (What this specific section measures based on the context)",
-            "representation": "string (1–2 sentences, concise, student-specific, referencing the scores/responses)"
+            "representation": "string (1-2 sentences, concise, student-specific, referencing the scores/responses)"
         }
       ]
     }
@@ -108,14 +106,14 @@ def get_portfolio_prompt(data: StudentPortfolioInput) -> str:
 
     **Instructions:**
     1. **CAREER OBJECTIVE:**
-       • 3–4 lines, crisp and personalized.
+       • 3-4 lines, crisp and personalized.
        • Must reflect Major Papers + Projects + Internships + Certifications.
        • Tone: professional, confident, future-oriented.
        • Avoid generic phrases (“seeking opportunity”, “to work in a company”).
        • Clearly state the student's direction + strengths + value they bring.
 
     2. **PORTFOLIO SUMMARY:**
-       • 5–7 lines, holistic and clear.
+       • 5-7 lines, holistic and clear.
        • Summarize academics, projects, internships, abilities, certificates, and activities.
        • Highlight both technical and soft skills with brief examples.
        • Avoid repeating the Career Objective wording.
@@ -133,7 +131,7 @@ def get_portfolio_prompt(data: StudentPortfolioInput) -> str:
        • **Category:** Use the high-level group name provided (e.g., "General Aptitude Test").
        • **Section:** Use the specific section/sub-test name (e.g., "Quantitative Analysis", "Logical Reasoning").
        • **Description:** Briefly explain what this specific section measures.
-       • **Representation:** 1–2 concise sentences quoting the specific score or summarizing the response pattern.
+       • **Representation:** 1-2 concise sentences quoting the specific score or summarizing the response pattern.
        • Keep the wording simple, clear, and easy to read.
 
     **Output strictly JSON:**
