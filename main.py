@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 import os
+from app.core.config import settings
 from app.api import auth, report
 
 app = FastAPI(
@@ -9,14 +10,14 @@ app = FastAPI(
     version="2.1.0"
 )
 
-# --- CORS MIDDLEWARE (Frontend Connection) ---
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"], # Change to specific domains in strict production
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+if settings.BACKEND_CORS_ORIGINS:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=[str(origin) for origin in settings.BACKEND_CORS_ORIGINS],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
 REPORTS_DIR = "static/reports"
 os.makedirs(REPORTS_DIR, exist_ok=True)
