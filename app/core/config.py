@@ -18,11 +18,11 @@ class Settings(BaseSettings):
     ADMIN_USERNAME: str
     ADMIN_PASSWORD: str
 
-    BACKEND_CORS_ORIGINS: Union[List[str], str] = []
+    FRONTENT_ALLOWED_ORIGINS: Union[List[str], str] = []
 
     BASE_URL: str = "http://localhost:8000"
 
-    @field_validator("BACKEND_CORS_ORIGINS", mode="before")
+    @field_validator("FRONTENT_ALLOWED_ORIGINS", mode="before")
     @classmethod
     def assemble_cors_origins(cls, v: Union[str, List[str]]) -> List[str]:
         """
