@@ -10,22 +10,22 @@ app = FastAPI(
     version="2.1.0"
 )
 
-if settings.BACKEND_CORS_ORIGINS:
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=[str(origin) for origin in settings.BACKEND_CORS_ORIGINS],
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
+if settings.FRONTENT_ALLOWED_ORIGINS:
+  app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[str(origin) for origin in settings.FRONTENT_ALLOWED_ORIGINS], 
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 REPORTS_DIR = "static/reports"
 os.makedirs(REPORTS_DIR, exist_ok=True)
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-app.include_router(auth.router, prefix="/api/v1/auth", tags=["Authentication"])
-app.include_router(report.router, prefix="/api/v1/report", tags=["Reports"])
+app.include_router(auth.router, prefix="/auth", tags=["Authentication"])
+app.include_router(report.router, prefix="/report", tags=["Reports"])
 
 @app.get("/")
 async def read_root():

@@ -2,7 +2,6 @@ FROM python:3.11-slim-bullseye
 
 ENV PYTHONUNBUFFERED=1
 
-# Install wkhtmltopdf AND required fonts
 RUN apt-get update && apt-get install -y \
     wkhtmltopdf \
     fonts-liberation \
