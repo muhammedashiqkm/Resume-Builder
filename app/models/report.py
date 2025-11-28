@@ -54,7 +54,6 @@ class ActivityDetail(BasePortfolioModel):
 class StudentPortfolioInput(BasePortfolioModel):
     model: Literal["openai", "gemini", "deepseek"] = "gemini"
     
-    # Python Variables (snake_case)      # JSON Keys (CamelCase)
     student_name: str                  = Field(..., alias="StudentName")
     course_name: str                   = Field(..., alias="CourseName")
     institution_name: str              = Field(..., alias="InstitutionName")
@@ -62,7 +61,6 @@ class StudentPortfolioInput(BasePortfolioModel):
     batch: str                         = Field(..., alias="Batch")
     cgpa: Optional[str]                = Field(None, alias="CGPA")
     
-    # Nested Lists
     details_list: List[ProjectInternshipCertDetail] = Field(..., alias="StudentProjectInternshipCertificationDetailsForPortfolio")
     major_papers: List[MajorPaper]                  = Field(..., alias="StudentMajorCourseDetailsForPortfolioData")
     po_details: List[CourseOutcome]                 = Field(..., alias="StudentPODetailsForPortfolioData")
@@ -70,7 +68,7 @@ class StudentPortfolioInput(BasePortfolioModel):
     ability_details: List[AbilityDetail]            = Field(..., alias="StudentAbilityDetailsForPortfolioData")
     achievement_details: List[AchievementDetail]    = Field(..., alias="StudentAchievementDetailsForPortfolioData")
     activity_details: List[ActivityDetail]          = Field(..., alias="StudentActivityDetailsForPortfolioData")
-    psychometric_details: List[PsychometricQuestionDetail]= Field(..., alias="StudentPsychometricDetailsForPortfolioData")
+    psychometric_details: List[PsychometricQuestionDetail] = Field(..., alias="StudentPsychometricDetailsForPortfolioData")
 
 class AIContentOutput(BaseModel):
     career_objective: str
@@ -78,7 +76,6 @@ class AIContentOutput(BaseModel):
     course_outcomes_sentence: str
     skills_grouped: Dict[str, List[str]]
     achievements_activities_formatted: List[str]
-    psychometric_table_rows: List[Dict[str, str]]
 
 class ReportURLResponse(BaseModel):
     filename: str
