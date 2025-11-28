@@ -1,4 +1,5 @@
 import json
+from collections import defaultdict
 from openai import AsyncOpenAI
 import google.generativeai as genai
 
@@ -52,20 +53,17 @@ def get_portfolio_prompt(data: StudentPortfolioInput) -> str:
     # Achievements
     achievements = [f"Achievement: {a.achievement_item} Date:{format_date_str(a.achievement_date)} Achievement:{a.achievement_level} Remark:({a.remarks})" for a in data.achievement_details]
     activities = [f"Activity: {act.activity} Date:{format_date_str(act.activity_date)}" for act in data.activity_details]
-    
-    # Psychometric Context
-    psychometric_context = []
-    for cat in data.psychometric_details:
-        details = []
-        for sec in cat.sections:
-            if cat.result_type == 'objective':
-                details.append(f"{sec.section}: {sec.student_score}/{sec.total_mark}")
-            elif sec.responses:
-                q_a = [f"Q:{r.question}->A:{r.selected_option}" for r in sec.responses]
-                details.append(f"{sec.section} Answers: {'; '.join(q_a)}")
-        psychometric_context.append(f"Category {cat.category}: {', '.join(details)}")
 
-    # --- 2. Construct the Schema ---
+    psychometric_context = []
+    grouped_psycho = defaultdict(list)
+    
+    for item in data.psychometric_details:
+        details = f"Question/Task: {item.Representation} | Context: {item.description}"
+        grouped_psycho[item.category].append(details)
+
+    for category, items in grouped_psycho.items():
+        psychometric_context.append(f"Category '{category}': {'; '.join(items)}")
+
     schema = """
     {
       "career_objective": "string (3-4 lines, crisp and personalized. Reflect Major Papers + Projects + Internships + Certifications.)",
@@ -76,19 +74,10 @@ def get_portfolio_prompt(data: StudentPortfolioInput) -> str:
       },
       "achievements_activities_formatted": [
           "string"
-      ] (Generate impressive bullet points from Achievements and Activities),
-      "psychometric_table_rows": [
-        {
-            "category": "string (The main category name, e.g., 'General Aptitude Test')",
-            "section": "string (The specific sub-section, e.g., 'Quantitative Analysis' or 'Behavioral Assessment')",
-            "description": "string (What this specific section measures based on the context)",
-            "representation": "string (1-2 sentences, concise, student-specific, referencing the scores/responses)"
-        }
-      ]
+      ] (Generate impressive bullet points from Achievements and Activities)
     }
     """
 
-    # --- 3. Construct the Prompt ---
     prompt = f"""
     You are a professional Resume Writer. Analyze the COMPLETE student profile below to generate a high-impact portfolio.
 
@@ -102,7 +91,7 @@ def get_portfolio_prompt(data: StudentPortfolioInput) -> str:
     - Achievements/Activities: {'; '.join(achievements + activities)}
     - Key Course Outcomes: {'; '.join(outcomes)}
     - Self-Reported Abilities: {', '.join(abilities)}
-    - Psychometric/Aptitude Results: {' | '.join(psychometric_context)}
+    - Psychometric/Aptitude Analysis: {' || '.join(psychometric_context)}
 
     **Instructions:**
     1. **CAREER OBJECTIVE:**
@@ -125,14 +114,6 @@ def get_portfolio_prompt(data: StudentPortfolioInput) -> str:
        • Decide which category each skill belongs to (do not use a fixed list).
        • Keep category names short (e.g., "Technical", "Domain Knowledge", "Tools", "Soft Skills").
        • Put each skill under the most appropriate category. Avoid duplicates.
-
-    4. **PSYCHOMETRIC TABLE:**
-       For each psychometric section found in the data, generate one row.
-       • **Category:** Use the high-level group name provided (e.g., "General Aptitude Test").
-       • **Section:** Use the specific section/sub-test name (e.g., "Quantitative Analysis", "Logical Reasoning").
-       • **Description:** Briefly explain what this specific section measures.
-       • **Representation:** 1-2 concise sentences quoting the specific score or summarizing the response pattern.
-       • Keep the wording simple, clear, and easy to read.
 
     **Output strictly JSON:**
     {schema}
@@ -175,6 +156,6 @@ async def generate_ai_content(student_data: StudentPortfolioInput) -> AIContentO
             portfolio_summary="Dedicated student with a strong academic background.",
             course_outcomes_sentence="Demonstrated proficiency in core academic subjects.",
             skills_grouped={"General": ["Communication", "Teamwork"]},
-            achievements_activities_formatted=["Participated in various academic events."],
-            psychometric_table_rows=[]
+            achievements_activities_formatted=["Participated in various academic events."]
+
         )

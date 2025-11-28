@@ -178,33 +178,28 @@
         {% endfor %}
     </ul>
 
-        <h2>PSYCHOMETRIC PROFILE</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th style="width: 30%;">Assessment Area</th>
-                    <th style="width: 35%;">Description</th>
-                    <th style="width: 35%;">Representation</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for row in ai.psychometric_table_rows %}
-                <tr>
-                    <td>
-                        <strong>{{ row.category }}</strong>
-                        <div style="font-size: 1em; color: #555; margin-top: 4px;">
-                            Section: {{ row.section }}
-                        </div>
-                    </td>
-                    <td>{{ row.description }}</td>
-                    <td>{{ row.representation }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <h2>PSYCHOMETRIC PROFILE</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Category</th>
+                <th>Description</th>
+                <th>Question/Data</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in student.psychometric_details %}
+            <tr>
+                <td>{{ item.category }}</td>
+                <td>{{ item.description }}</td>
+                <td>{{ item.Representation }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 
-        <h2>PORTFOLIO SUMMARY</h2>
-        <blockquote>"{{ ai.portfolio_summary }}"</blockquote>
+    <h2>PORTFOLIO SUMMARY</h2>
+    <blockquote>"{{ ai.portfolio_summary }}"</blockquote>
 
 </body>
 

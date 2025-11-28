@@ -12,20 +12,12 @@ class BasePortfolioModel(BaseModel):
         populate_by_name=True
     )
 
-class AssessmentResponse(BasePortfolioModel):
-    question: str
-    selected_option: str = Field(..., alias="selected_option")
 
-class PsychometricSection(BasePortfolioModel):
-    section: str
-    student_score: Optional[float] = None
-    total_mark: Optional[float] = None
-    responses: Optional[List[AssessmentResponse]] = None
+class PsychometricQuestionDetail(BasePortfolioModel):
+    category: str = Field(..., alias="Category")
+    description: str = Field(..., alias="Description")
+    Representation: str = Field(..., alias="Question")
 
-class PsychometricCategory(BasePortfolioModel):
-    category: str
-    result_type: str
-    sections: List[PsychometricSection]
 
 class ProjectInternshipCertDetail(BasePortfolioModel):
     type: Literal["Project", "Internship", "Certificate"] = Field(..., alias="Type")
@@ -78,7 +70,7 @@ class StudentPortfolioInput(BasePortfolioModel):
     ability_details: List[AbilityDetail]            = Field(..., alias="StudentAbilityDetailsForPortfolioData")
     achievement_details: List[AchievementDetail]    = Field(..., alias="StudentAchievementDetailsForPortfolioData")
     activity_details: List[ActivityDetail]          = Field(..., alias="StudentActivityDetailsForPortfolioData")
-    psychometric_details: List[PsychometricCategory]= Field(..., alias="StudentPsychometricDetailsForPortfolioData")
+    psychometric_details: List[PsychometricQuestionDetail]= Field(..., alias="StudentPsychometricDetailsForPortfolioData")
 
 class AIContentOutput(BaseModel):
     career_objective: str
