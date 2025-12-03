@@ -4,4 +4,4 @@ __pycache__/
 *.pyc
 logs/
 venv/
-myenv/
+static/

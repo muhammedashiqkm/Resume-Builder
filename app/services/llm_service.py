@@ -54,19 +54,31 @@ def get_portfolio_prompt(data: StudentPortfolioInput) -> str:
     achievements = [f"Achievement: {a.achievement_item} Date:{format_date_str(a.achievement_date)} Achievement:{a.achievement_level} Remark:({a.remarks})" for a in data.achievement_details]
     activities = [f"Activity: {act.activity} Date:{format_date_str(act.activity_date)}" for act in data.activity_details]
 
+    # Psychometric Context (Nested JSON) ---
     psychometric_context = []
     grouped_psycho = defaultdict(list)
     
     for item in data.psychometric_details:
-        details = f"Question/Task: {item.Representation} | Context: {item.description}"
-        grouped_psycho[item.category].append(details)
+        if item.json_result:
+            details = f"Representation: {item.json_result.representation} | Context: {item.json_result.description}"
+            grouped_psycho[item.category].append(details)
 
     for category, items in grouped_psycho.items():
         psychometric_context.append(f"Category '{category}': {'; '.join(items)}")
 
+    # --- Drive / Job Context ---
+    drive_context = "General Portfolio (No specific job targeted)"
+    if data.drive_data:
+        drive_entries = []
+        for d in data.drive_data:
+            entry = f"Company: {d.company_name}, Role: {d.designation} ({d.job_name})"
+            drive_entries.append(entry)
+        drive_context = "; ".join(drive_entries)
+
+    # --- Schema Definition ---
     schema = """
     {
-      "career_objective": "string (3-4 lines, crisp and personalized. Reflect Major Papers + Projects + Internships + Certifications.)",
+      "career_objective": "string (3-4 lines, crisp and personalized. If a Target Job is listed, tailor this specifically to that role/company.)",
       "portfolio_summary": "string (5-7 lines, holistic. Summarize academics, projects, internships, abilities, and activities.)",
       "course_outcomes_sentence": "string (A single sentence starting with 'Demonstrated proficiency in...', listing the outcomes. Ensure the last item is preceded by 'and'.)",
       "skills_grouped": {
@@ -74,12 +86,17 @@ def get_portfolio_prompt(data: StudentPortfolioInput) -> str:
       },
       "achievements_activities_formatted": [
           "string"
-      ] (Generate impressive bullet points from Achievements and Activities)
+      ] (Generate impressive bullet points from Achievements and Activities),
+      "rating": "string (e.g., '4.5/5'. A suitability score based on how well the student's skills match the 'Target Job/Drive' listed below.)"
     }
     """
 
+    # --- Construct Prompt ---
     prompt = f"""
-    You are a professional Resume Writer. Analyze the COMPLETE student profile below to generate a high-impact portfolio.
+    You are an expert HR Recruiter and Resume Writer. Analyze the student profile and the Target Job/Drive.
+
+    **Target Job/Drive:**
+    {drive_context}
 
     **Student Profile:**
     - Name: {data.student_name} ({data.course_name})
@@ -94,26 +111,30 @@ def get_portfolio_prompt(data: StudentPortfolioInput) -> str:
     - Psychometric/Aptitude Analysis: {' || '.join(psychometric_context)}
 
     **Instructions:**
-    1. **CAREER OBJECTIVE:**
+    1. **RATING (Crucial):** Evaluate how well the student fits the "Target Job/Drive".
+       - If "General Portfolio" is listed, give a score based on general employability (usually 3.5-4.5).
+       - If a specific Company/Role is listed:
+         - **4.5-5.0/5**: Strong match (Relevant projects, papers, or internships).
+         - **3.0-4.0/5**: Moderate match (Good skills but lacks specific domain experience).
+         - **<3.0/5**: Weak match.
+       - Return strictly as "X/5" (e.g. "4.2/5").
+
+    2. **CAREER OBJECTIVE:**
        • 3-4 lines, crisp and personalized.
+       • **Tailor this specifically to the Target Job/Drive if provided.**
        • Must reflect Major Papers + Projects + Internships + Certifications.
        • Tone: professional, confident, future-oriented.
-       • Avoid generic phrases (“seeking opportunity”, “to work in a company”).
-       • Clearly state the student's direction + strengths + value they bring.
 
-    2. **PORTFOLIO SUMMARY:**
+    3. **PORTFOLIO SUMMARY:**
        • 5-7 lines, holistic and clear.
        • Summarize academics, projects, internships, abilities, certificates, and activities.
        • Highlight both technical and soft skills with brief examples.
-       • Avoid repeating the Career Objective wording.
        • End with a short line showing readiness for industry roles.
 
-    3. **SKILLS:**
-       Analyze the student's data (Major Papers, Projects, Internships, Abilities, Certificates)
-       and group detected skills into meaningful categories chosen by you (the LLM).
-       • Decide which category each skill belongs to (do not use a fixed list).
-       • Keep category names short (e.g., "Technical", "Domain Knowledge", "Tools", "Soft Skills").
-       • Put each skill under the most appropriate category. Avoid duplicates.
+    4. **SKILLS:**
+       Analyze the student's data and group detected skills into meaningful categories chosen by you.
+       • Keep category names short (e.g., "Technical", "Tools", "Soft Skills").
+       • Avoid duplicates.
 
     **Output strictly JSON:**
     {schema}
@@ -152,10 +173,10 @@ async def generate_ai_content(student_data: StudentPortfolioInput) -> AIContentO
     except Exception as e:
         error_logger.error(f"AI Generation failed: {e}")
         return AIContentOutput(
-            career_objective="Seeking opportunities to leverage my skills.",
-            portfolio_summary="Dedicated student with a strong academic background.",
+            career_objective="Seeking opportunities to leverage my skills in a challenging environment.",
+            portfolio_summary="Dedicated student with a strong academic background and a passion for learning.",
             course_outcomes_sentence="Demonstrated proficiency in core academic subjects.",
-            skills_grouped={"General": ["Communication", "Teamwork"]},
-            achievements_activities_formatted=["Participated in various academic events."]
-
+            skills_grouped={"General": ["Communication", "Teamwork", "Problem Solving"]},
+            achievements_activities_formatted=["Participated in various academic events."],
+            rating="N/A"
         )

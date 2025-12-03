@@ -1,7 +1,6 @@
 from pydantic import BaseModel, Field, ConfigDict
 from typing import List, Optional, Literal, Dict
 
-#snake_case to camel_case
 def to_camel(string: str) -> str:
     return ''.join(word.capitalize() for word in string.split('_'))
 
@@ -12,13 +11,34 @@ class BasePortfolioModel(BaseModel):
         populate_by_name=True
     )
 
+# --- Sub-Models ---
 
-class PsychometricQuestionDetail(BasePortfolioModel):
+class DriveData(BasePortfolioModel):
+    company_name: str = Field(..., alias="CompanyName")
+    job_name: str = Field(..., alias="JobName")
+    designation: str = Field(..., alias="Designation")
+
+
+class PsychometricResultData(BasePortfolioModel):
+    """Handles the inner 'JsonResult' object"""
+    category: str = Field(..., alias="category")
+    description: str = Field(..., alias="description")
+    representation: str = Field(..., alias="Representation")
+    instance_id: Optional[int] = Field(None, alias="instance_id")
+
+class PsychometricItemWrapper(BasePortfolioModel):
+    """Handles the outer wrapper in the list"""
     category: str = Field(..., alias="Category")
-    description: str = Field(..., alias="Description")
-    Representation: str = Field(..., alias="Question")
+    json_result: Optional[PsychometricResultData] = Field(None, alias="JsonResult")
 
+    @property
+    def description(self) -> str:
+        return self.json_result.description if self.json_result else ""
 
+    @property
+    def representation(self) -> str:
+        return self.json_result.representation if self.json_result else ""
+    
 class ProjectInternshipCertDetail(BasePortfolioModel):
     type: Literal["Project", "Internship", "Certificate"] = Field(..., alias="Type")
     sub_type: Optional[str] = Field(None, alias="SubType")
@@ -27,12 +47,17 @@ class ProjectInternshipCertDetail(BasePortfolioModel):
     organization: Optional[str] = Field(None, alias="Organization")
     from_date: str = Field(..., alias="FromDate")
     to_date: str = Field(..., alias="ToDate")
+    submitted_on: Optional[str] = Field(None, alias="SubmittedOn")
+    year: Optional[int] = Field(None, alias="Year")
+    studentname: Optional[str] = Field(None, alias="StudentName")
 
 class MajorPaper(BasePortfolioModel):
     paper_name: str = Field(..., alias="PaperName")
+    paper_code: Optional[str] = Field(None, alias="PaperCode")
 
 class CourseOutcome(BasePortfolioModel):
     course_outcome: str = Field(..., alias="CourseOutCome")
+    co_number: Optional[str] = Field(None, alias="CONumber")
 
 class ClubDetail(BasePortfolioModel):
     club: str = Field(..., alias="Club")
@@ -46,21 +71,27 @@ class AchievementDetail(BasePortfolioModel):
     achievement_level: str = Field(..., alias="AchievementLevel")
     achievement_date: str = Field(..., alias="AchievementDate")
     remarks: str = Field(..., alias="Remarks")
+    academic_year: Optional[str] = Field(None, alias="AcademicYear")
 
 class ActivityDetail(BasePortfolioModel):
     activity: str = Field(..., alias="Activity")
     activity_date: str = Field(..., alias="ActivityDate")
+    academic_year: Optional[str] = Field(None, alias="AcademicYear")
 
+# --- Main Student Input Model ---
 class StudentPortfolioInput(BasePortfolioModel):
     model: Literal["openai", "gemini", "deepseek"] = "gemini"
     
-    student_name: str                  = Field(..., alias="StudentName")
-    course_name: str                   = Field(..., alias="CourseName")
-    institution_name: str              = Field(..., alias="InstitutionName")
-    email: str                         = Field(..., alias="Email")
-    batch: str                         = Field(..., alias="Batch")
-    cgpa: Optional[str]                = Field(None, alias="CGPA")
+    # Basic Info
+    student_name: str     = Field(..., alias="StudentName")
+    course_name: str      = Field(..., alias="CourseName")
+    institution_name: str = Field(..., alias="InstitutionName")
+    email: str            = Field(..., alias="Email")
+    batch: str            = Field(..., alias="Batch")
+    cgpa: Optional[str]   = Field(None, alias="CGPA")
+    course_id: Optional[int] = Field(None, alias="CourseID") 
     
+    # Nested Lists
     details_list: List[ProjectInternshipCertDetail] = Field(..., alias="StudentProjectInternshipCertificationDetailsForPortfolio")
     major_papers: List[MajorPaper]                  = Field(..., alias="StudentMajorCourseDetailsForPortfolioData")
     po_details: List[CourseOutcome]                 = Field(..., alias="StudentPODetailsForPortfolioData")
@@ -68,15 +99,21 @@ class StudentPortfolioInput(BasePortfolioModel):
     ability_details: List[AbilityDetail]            = Field(..., alias="StudentAbilityDetailsForPortfolioData")
     achievement_details: List[AchievementDetail]    = Field(..., alias="StudentAchievementDetailsForPortfolioData")
     activity_details: List[ActivityDetail]          = Field(..., alias="StudentActivityDetailsForPortfolioData")
-    psychometric_details: List[PsychometricQuestionDetail] = Field(..., alias="StudentPsychometricDetailsForPortfolioData")
-
+    psychometric_details: List[PsychometricItemWrapper] = Field(..., alias="StudentPsychometricDetailsForPortfolioData")
 class AIContentOutput(BaseModel):
     career_objective: str
     portfolio_summary: str
     course_outcomes_sentence: str
     skills_grouped: Dict[str, List[str]]
     achievements_activities_formatted: List[str]
+    rating: str
 
 class ReportURLResponse(BaseModel):
     filename: str
     report_url: str
+    rating: str
+
+class PortfolioUrlRequest(BaseModel):
+    url: str = Field(..., alias="ProfileURL")
+    drivedata: List[DriveData] = Field(..., alias="DriveData")
+    
