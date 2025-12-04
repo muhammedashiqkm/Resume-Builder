@@ -10,17 +10,18 @@ router = APIRouter()
 @router.post("/generate", response_model=ReportURLResponse)
 async def generate_report_from_url(request_data: PortfolioUrlRequest):
     """
-    1. Receives URL + DriveData.
+    1. Receives URL + DriveData + Model Preference.
     2. Fetches student data from URL.
-    3. Merges DriveData into StudentData.
+    3. Merges DriveData and Model into StudentData.
     4. Generates PDF + Rating.
     """
-    
+
     target_url = request_data.url.strip()
     if target_url.lower().startswith("url:"):
         target_url = target_url[4:].strip()
 
-    app_logger.info(f"Fetching data from: {target_url}")
+    app_logger.info(f"Fetching data from: {target_url} using model: {request_data.model}")
+
     fetched_data = {}
     async with httpx.AsyncClient() as client:
         try:
@@ -33,9 +34,11 @@ async def generate_report_from_url(request_data: PortfolioUrlRequest):
 
     try:
         student_data = StudentPortfolioInput(**fetched_data)
-        
-        student_data.drive_data = request_data.drivedata
 
+        student_data.drive_data = request_data.drivedata
+        
+        student_data.model = request_data.model
+      
         ai_content = await generate_ai_content(student_data)
         
         pdf_url = save_pdf_report(student_data, ai_content)

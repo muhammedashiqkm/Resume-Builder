@@ -82,7 +82,7 @@ class ActivityDetail(BasePortfolioModel):
 # --- Main Student Input Model ---
 class StudentPortfolioInput(BasePortfolioModel):
 
-    model: Literal["openai", "gemini", "deepseek"] = "gemini" 
+    model: Literal["openai", "gemini", "deepseek"] = "gemini"
 
     # Basic Info
     student_name: str     = Field(..., alias="StudentName")
