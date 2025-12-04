@@ -114,7 +114,7 @@ class AIContentOutput(BaseModel):
 class ReportURLResponse(BaseModel):
     filename: str
     report_url: str
-    rating: str
+    rating: int
 
 class PortfolioUrlRequest(BaseModel):
     model: Literal["openai", "gemini", "deepseek"] = "gemini"

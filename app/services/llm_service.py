@@ -87,7 +87,9 @@ def get_portfolio_prompt(data: StudentPortfolioInput) -> str:
       "achievements_activities_formatted": [
           "string"
       ] (Generate impressive bullet points from Achievements and Activities),
-      "rating": "string (e.g., '4.5/5'. A suitability score based on how well the student's skills match the 'Target Job/Drive' listed below.)"
+
+      "rating": "integer (1–5 only). A suitability score based on how well the student's overall profile (major papers, projects, internships, certifications, clubs, achievements/activities, course outcomes, abilities, and psychometric/aptitude analysis) matches the 'Target Job/Drive' listed below."
+
     }
     """
 
@@ -111,13 +113,17 @@ def get_portfolio_prompt(data: StudentPortfolioInput) -> str:
     - Psychometric/Aptitude Analysis: {' || '.join(psychometric_context)}
 
     **Instructions:**
-    1. **RATING (Crucial):** Evaluate how well the student fits the "Target Job/Drive".
-       - If "General Portfolio" is listed, give a score based on general employability (usually 3.5-4.5).
-       - If a specific Company/Role is listed:
-         - **4.5-5.0/5**: Strong match (Relevant projects, papers, or internships).
-         - **3.0-4.0/5**: Moderate match (Good skills but lacks specific domain experience).
-         - **<3.0/5**: Weak match.
-       - Return strictly as "X/5" (e.g. "4.2/5").
+    1. **RATING (Crucial):** Evaluate how well the student fits the "Target Job/Drive" using the entire Student Profile:
+   - Consider: Major Papers, Projects, Internships, Certifications, Active Clubs, Achievements/Activities, Key Course Outcomes, Self-Reported Abilities (with their values), and Psychometric/Aptitude Analysis.
+   - If "General Portfolio (No specific job targeted)" is listed, rate based on general employability.
+   - Use this scale:
+     - **5** – Very strong overall match.
+     - **4** – Good match with minor gaps.
+     - **3** – Moderate match (some relevant skills, clear gaps).
+     - **2** – Low match (few relevant skills or weak evidence).
+     - **1** – Very low match.
+   - Return only an **integer**: `1`, `2`, `3`, `4`, or `5` (no decimals, no text, no “/5”).
+
 
     2. **CAREER OBJECTIVE:**
        • 3-4 lines, crisp and personalized.

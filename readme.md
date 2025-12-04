@@ -76,7 +76,7 @@ This FastAPI application generates professional PDF portfolios for students. It 
 ## 📡 API Documentation
 
 ### 1. Authentication
-**Endpoint:** `POST /api/v1/auth/login`
+**Endpoint:** `POST /auth/login`
 
 Used to obtain a Bearer token required for generating reports.
 
@@ -101,7 +101,7 @@ Used to obtain a Bearer token required for generating reports.
 
 ### 2\. Generate Portfolio
 
-**Endpoint:** `POST /api/v1/report/generate`  
+**Endpoint:** `POST /report/generate`  
 **Auth:** Requires Header `Authorization: Bearer <access_token>`
 
 Generates a PDF portfolio based on the provided student data. The system sends this data to the selected LLM to write the Career Objective, Summary, and Skill Grouping before creating the PDF.
@@ -111,7 +111,7 @@ Generates a PDF portfolio based on the provided student data. The system sends t
 
 ```json
 {
-  "model": "deepseek",
+  "model": "gemini",
   "ProfileURL": "http://127.0.0.1:5000/student.json",
   "DriveData": [
      {
