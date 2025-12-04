@@ -3,6 +3,7 @@ from jinja2 import Environment, FileSystemLoader
 import os
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
+from app.core.config import settings
 
 from app.models.report import StudentPortfolioInput, AIContentOutput
 from app.core.logging_config import error_logger
@@ -12,7 +13,7 @@ env = Environment(loader=FileSystemLoader("app/templates"))
 template = env.get_template("report_template.html")
 executor = ThreadPoolExecutor()
 
-REPORTS_DIR = "static/reports"
+REPORTS_DIR = "media/reports"
 if not os.path.exists(REPORTS_DIR):
     os.makedirs(REPORTS_DIR)
 
@@ -91,7 +92,7 @@ def save_pdf_report(student_data: StudentPortfolioInput, ai_content: AIContentOu
         with open(file_path, 'wb') as f:
             f.write(pdf_bytes)
 
-        return f"static/reports/{filename}"
+        return f"{settings.BASE_URL}/media/reports/{filename}"
         
     except Exception as e:
         error_logger.error(f"PDF Error: {e}")

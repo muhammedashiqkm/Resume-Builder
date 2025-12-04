@@ -1,5 +1,4 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import field_validator, AnyHttpUrl
 from typing import Optional, List, Union
 
 class Settings(BaseSettings):
@@ -18,26 +17,7 @@ class Settings(BaseSettings):
     ADMIN_USERNAME: str
     ADMIN_PASSWORD: str
 
-    FRONTENT_ALLOWED_ORIGINS: Union[List[str], str] = []
-
     BASE_URL: str = "http://localhost:8000"
-
-    @field_validator("FRONTENT_ALLOWED_ORIGINS", mode="before")
-    @classmethod
-    def assemble_cors_origins(cls, v: Union[str, List[str]]) -> List[str]:
-        """
-        Parses a comma-separated string OR a JSON-formatted list.
-        """
-        if isinstance(v, str):
-            if v.strip().startswith("["):
-                import json
-                try:
-                    return json.loads(v)
-                except json.JSONDecodeError:
-                    pass
-            return [i.strip() for i in v.split(",") if i.strip()]
-        
-        return v or []
 
     model_config = SettingsConfigDict(
         env_file=".env", 

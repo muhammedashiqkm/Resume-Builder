@@ -8,5 +8,5 @@ services:
     env_file:
       - .env
     volumes:
-      - ./static/reports:/app/static/reports
+      - ./media/reports:/app/media/reports
     container_name: student_report_api

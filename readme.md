@@ -110,96 +110,17 @@ Generates a PDF portfolio based on the provided student data. The system sends t
 *Note: The API expects specific Aliases (CamelCase) as defined in the Pydantic models.*
 
 ```json
-[
-  {
-    "model": "gemini", 
-    "StudentName": "John Doe",
-    "CourseName": "B.Tech Computer Science",
-    "InstitutionName": "Tech Institute of Engineering",
-    "Email": "john.doe@example.com",
-    "Batch": "2021-2025",
-    "CGPA": "8.5",
-    
-    "StudentProjectInternshipCertificationDetailsForPortfolio": [
-      {
-        "Type": "Project",
-        "SubType": "Academic",
-        "Title": "AI Resume Builder",
-        "Description": "Built a resume parser using Python and NLP.",
-        "Organization": "College Project",
-        "FromDate": "2023-01-01",
-        "ToDate": "2023-04-01"
-      },
-      {
-        "Type": "Internship",
-        "Title": "Backend Intern",
-        "Description": "Worked on Django APIs.",
-        "Organization": "TechCorp Solutions",
-        "FromDate": "2023-06-01",
-        "ToDate": "2023-08-01"
-      }
-    ],
-
-    "StudentMajorCourseDetailsForPortfolioData": [
-      { "PaperName": "Data Structures" },
-      { "PaperName": "Artificial Intelligence" }
-    ],
-
-    "StudentPODetailsForPortfolioData": [
-      { "CourseOutCome": "Ability to apply math foundations" },
-      { "CourseOutCome": "Analyze complex engineering problems" }
-    ],
-
-    "StudentClubDetailsForPortfolioData": [
-      { "Club": "Coding Club" },
-      { "Club": "Robotics Society" }
-    ],
-
-    "StudentAbilityDetailsForPortfolioData": [
-      { "Ability": "Python Programming", "Value": 90 },
-      { "Ability": "Public Speaking", "Value": 85 }
-    ],
-
-    "StudentAchievementDetailsForPortfolioData": [
-      {
-        "AchievementItem": "Hackathon Winner",
-        "AchievementLevel": "National",
-        "AchievementDate": "2023-10-15",
-        "Remarks": "First prize among 50 teams"
-      }
-    ],
-
-    "StudentActivityDetailsForPortfolioData": [
-      { "Activity": "Blood Donation Camp", "ActivityDate": "2022-05-10" }
-    ],
-
-    "StudentPsychometricDetailsForPortfolioData": [
-      {
-        "category": "General Aptitude",
-        "result_type": "objective",
-        "sections": [
-          {
-            "section": "Logical Reasoning",
-            "student_score": 18,
-            "total_mark": 20
-          }
-        ]
-      },
-      {
-        "category": "Behavioral Assessment",
-        "result_type": "subjective",
-        "sections": [
-          {
-            "section": "Leadership Style",
-            "responses": [
-              { "question": "How do you handle conflict?", "selected_option": "Collaboration" }
-            ]
-          }
-        ]
-      }
-    ]
-  }
-]
+{
+  "model": "deepseek",
+  "ProfileURL": "http://127.0.0.1:5000/student.json",
+  "DriveData": [
+     {
+      "CompanyName": "Infosys",
+      "JobName": "Power Programmer",
+      "Designation": "Python"
+    }
+  ]
+}
 ```
 
 **Response (200 OK):**
@@ -208,7 +129,8 @@ Returns the download URL for the generated PDF.
 ```json
 {
   "filename": "John_Doe_Portfolio.pdf",
-  "report_url": "http://localhost:8000/static/reports/John_Doe_Tech_Institute_of_Engineering_john_doe_at_example_com.pdf"
+  "report_url": "http://localhost:8000/media/reports/John_Doe_Tech_Institute_of_Engineering_john_doe_at_example_com.pdf",
+  "rating": "4.3/5"
 }
 ```
 
@@ -240,7 +162,7 @@ Returns the download URL for the generated PDF.
 │   │   ├── auth.py            # Login routes
 │   │   └── report.py          # Generation routes
 │   └── main.py
-├── static
+├── media
 │   └── reports                # Generated PDF storage
 ├── logs                       # App logs
 ├── .env

@@ -21,7 +21,6 @@ async def generate_report_from_url(request_data: PortfolioUrlRequest):
         target_url = target_url[4:].strip()
 
     app_logger.info(f"Fetching data from: {target_url}")
-
     fetched_data = {}
     async with httpx.AsyncClient() as client:
         try:

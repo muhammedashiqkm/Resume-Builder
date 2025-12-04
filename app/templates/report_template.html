@@ -188,14 +188,14 @@
             </tr>
         </thead>
         <tbody>
-            {% for item in student.psychometric_details %}
-            <tr>
-                <td>{{ item.category }}</td>
-                <td>{{ item.description }}</td>
-                <td>{{ item.Representation }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
+    {% for item in student.psychometric_details %}
+    <tr>
+        <td>{{ item.category }}</td>
+        <td>{{ item.json_result.description }}</td>
+        <td>{{ item.json_result.representation }}</td>
+    </tr>
+    {% endfor %}
+</tbody>
     </table>
 
     <h2>PORTFOLIO SUMMARY</h2>

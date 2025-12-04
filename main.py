@@ -10,19 +10,19 @@ app = FastAPI(
     version="2.1.0"
 )
 
-if settings.FRONTENT_ALLOWED_ORIGINS:
-  app.add_middleware(
+
+app.add_middleware(
     CORSMiddleware,
-    allow_origins=[str(origin) for origin in settings.FRONTENT_ALLOWED_ORIGINS], 
+    allow_origins=["*"], 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-REPORTS_DIR = "static/reports"
+REPORTS_DIR = "media/reports"
 os.makedirs(REPORTS_DIR, exist_ok=True)
 
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/media", StaticFiles(directory="media"), name="media")
 
 app.include_router(auth.router, prefix="/auth", tags=["Authentication"])
 app.include_router(report.router, prefix="/report", tags=["Reports"])
