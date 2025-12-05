@@ -162,13 +162,16 @@
     </ul>
     {% endif %}
 
+    {% if ai.achievements_activities_formatted %}
     <h2>ACHIEVEMENTS & ACTIVITIES</h2>
     <ul>
         {% for item in ai.achievements_activities_formatted %}
         <li>{{ item }}</li>
         {% endfor %}
     </ul>
+    {% endif %}
 
+    {% if student.club_details %}
     <h2>CLUBS & ACTIVITIES</h2>
     <ul>
         {% for club in student.club_details %}
@@ -177,7 +180,9 @@
         </li>
         {% endfor %}
     </ul>
+    {% endif %}
 
+    {% if student.psychometric_details %}
     <h2>PSYCHOMETRIC PROFILE</h2>
     <table>
         <thead>
@@ -188,15 +193,16 @@
             </tr>
         </thead>
         <tbody>
-    {% for item in student.psychometric_details %}
-    <tr>
-        <td>{{ item.category }}</td>
-        <td>{{ item.json_result.description }}</td>
-        <td>{{ item.json_result.representation }}</td>
-    </tr>
-    {% endfor %}
-</tbody>
+            {% for item in student.psychometric_details %}
+            <tr>
+                <td>{{ item.category }}</td>
+                <td>{{ item.json_result.description }}</td>
+                <td>{{ item.json_result.representation }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
     </table>
+    {% endif %}
 
     <h2>PORTFOLIO SUMMARY</h2>
     <blockquote>"{{ ai.portfolio_summary }}"</blockquote>

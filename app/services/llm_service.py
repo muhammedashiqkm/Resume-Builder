@@ -2,6 +2,7 @@ import json
 from collections import defaultdict
 from openai import AsyncOpenAI
 import google.generativeai as genai
+from fastapi import HTTPException
 
 from app.core.config import settings
 from app.models.report import StudentPortfolioInput, AIContentOutput
@@ -17,7 +18,6 @@ if settings.GEMINI_API_KEY:
     gemini_model = genai.GenerativeModel(settings.GEMINI_MODEL_NAME)
 
 def get_portfolio_prompt(data: StudentPortfolioInput) -> str:
-    # --- 1. Extract & Format Data ---
     
     projects = []
     internships = []
@@ -88,7 +88,7 @@ def get_portfolio_prompt(data: StudentPortfolioInput) -> str:
           "string"
       ] (Generate impressive bullet points from Achievements and Activities),
 
-      "rating": "integer (1–5 only). A suitability score based on how well the student's overall profile (major papers, projects, internships, certifications, clubs, achievements/activities, course outcomes, abilities, and psychometric/aptitude analysis) matches the 'Target Job/Drive' listed below."
+      "rating": "integer (1-5 only). A suitability score based on how well the student's overall profile (major papers, projects, internships, certifications, clubs, achievements/activities, course outcomes, abilities, and psychometric/aptitude analysis) matches the 'Target Job/Drive' listed below."
 
     }
     """
@@ -117,11 +117,11 @@ def get_portfolio_prompt(data: StudentPortfolioInput) -> str:
    - Consider: Major Papers, Projects, Internships, Certifications, Active Clubs, Achievements/Activities, Key Course Outcomes, Self-Reported Abilities (with their values), and Psychometric/Aptitude Analysis.
    - If "General Portfolio (No specific job targeted)" is listed, rate based on general employability.
    - Use this scale:
-     - **5** – Very strong overall match.
-     - **4** – Good match with minor gaps.
-     - **3** – Moderate match (some relevant skills, clear gaps).
-     - **2** – Low match (few relevant skills or weak evidence).
-     - **1** – Very low match.
+     - **5** - Very strong overall match.
+     - **4** - Good match with minor gaps.
+     - **3** - Moderate match (some relevant skills, clear gaps).
+     - **2** - Low match (few relevant skills or weak evidence).
+     - **1** - Very low match.
    - Return only an **integer**: `1`, `2`, `3`, `4`, or `5` (no decimals, no text, no “/5”).
 
 
@@ -178,11 +178,12 @@ async def generate_ai_content(student_data: StudentPortfolioInput) -> AIContentO
         return AIContentOutput(**json.loads(response_content))
     except Exception as e:
         error_logger.error(f"AI Generation failed: {e}")
-        return AIContentOutput(
-            career_objective="Seeking opportunities to leverage my skills in a challenging environment.",
-            portfolio_summary="Dedicated student with a strong academic background and a passion for learning.",
-            course_outcomes_sentence="Demonstrated proficiency in core academic subjects.",
-            skills_grouped={"General": ["Communication", "Teamwork", "Problem Solving"]},
-            achievements_activities_formatted=["Participated in various academic events."],
-            rating="N/A"
+        
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "error_type": "LLM_PROCESSING_ERROR",
+                "message": f"Failed to generate analysis using {model_name}.",
+                "technical_details": str(e),
+            },
         )

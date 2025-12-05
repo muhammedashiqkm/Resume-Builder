@@ -11,7 +11,6 @@ class BasePortfolioModel(BaseModel):
         populate_by_name=True
     )
 
-# --- Sub-Models ---
 
 class DriveData(BasePortfolioModel):
     company_name: str = Field(..., alias="CompanyName")
@@ -37,7 +36,7 @@ class PsychometricCategoryWrapper(BaseModel):
         return self.json_result.description if self.json_result else ""
 
     @property
-    def Representation(self) -> str: # Capital 'R' to match old template usage
+    def Representation(self) -> str: 
         return self.json_result.representation if self.json_result else ""
     
 class ProjectInternshipCertDetail(BasePortfolioModel):
@@ -79,12 +78,10 @@ class ActivityDetail(BasePortfolioModel):
     activity_date: str = Field(..., alias="ActivityDate")
     academic_year: Optional[str] = Field(None, alias="AcademicYear")
 
-# --- Main Student Input Model ---
 class StudentPortfolioInput(BasePortfolioModel):
 
     model: Literal["openai", "gemini", "deepseek"] = "gemini"
 
-    # Basic Info
     student_name: str     = Field(..., alias="StudentName")
     course_name: str      = Field(..., alias="CourseName")
     institution_name: str = Field(..., alias="InstitutionName")
@@ -93,31 +90,31 @@ class StudentPortfolioInput(BasePortfolioModel):
     cgpa: Optional[str]   = Field(None, alias="CGPA")
     course_id: Optional[int] = Field(None, alias="CourseID") 
     
-    # Nested Lists
     details_list: List[ProjectInternshipCertDetail] = Field(..., alias="StudentProjectInternshipCertificationDetailsForPortfolio")
     major_papers: List[MajorPaper]                  = Field(..., alias="StudentMajorCourseDetailsForPortfolioData")
     po_details: List[CourseOutcome]                 = Field(..., alias="StudentPODetailsForPortfolioData")
-    club_details: List[ClubDetail]                  = Field(..., alias="StudentClubDetailsForPortfolioData")
-    ability_details: List[AbilityDetail]            = Field(..., alias="StudentAbilityDetailsForPortfolioData")
-    achievement_details: List[AchievementDetail]    = Field(..., alias="StudentAchievementDetailsForPortfolioData")
-    activity_details: List[ActivityDetail]          = Field(..., alias="StudentActivityDetailsForPortfolioData")
+    club_details: List[ClubDetail]                  = Field(default=[], alias="StudentClubDetailsForPortfolioData")
+    ability_details: List[AbilityDetail]            = Field(default=[], alias="StudentAbilityDetailsForPortfolioData")
+    achievement_details: List[AchievementDetail]    = Field(default=[], alias="StudentAchievementDetailsForPortfolioData")
+    activity_details: List[ActivityDetail]          = Field(default=[], alias="StudentActivityDetailsForPortfolioData")
     psychometric_details: List[PsychometricCategoryWrapper] = Field(..., alias="StudentPsychometricDetailsForPortfolioData")
     drive_data: Optional[List[DriveData]] = Field(default=[], alias="DriveData")
+
 class AIContentOutput(BaseModel):
     career_objective: str
     portfolio_summary: str
     course_outcomes_sentence: str
     skills_grouped: Dict[str, List[str]]
     achievements_activities_formatted: List[str]
-    rating: str
+    rating: int
 
 class ReportURLResponse(BaseModel):
     filename: str
     report_url: str
-    rating: int
+    rating: Optional[int] = None
 
 class PortfolioUrlRequest(BaseModel):
     model: Literal["openai", "gemini", "deepseek"] = "gemini"
     url: str = Field(..., alias="ProfileURL")
-    drivedata: List[DriveData] = Field(..., alias="DriveData")
+    drivedata: List[DriveData] = Field(default=[], alias="DriveData")
     
