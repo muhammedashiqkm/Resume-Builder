@@ -9,4 +9,5 @@ services:
       - .env
     volumes:
       - ./media/reports:/app/media/reports
+      - ./logs:/app/logs
     container_name: student_report_api
