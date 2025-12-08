@@ -9,7 +9,6 @@ from app.models.report import StudentPortfolioInput, AIContentOutput
 from app.core.logging_config import app_logger, error_logger
 from app.core.utils import format_date_str
 
-# --- Client Initializations ---
 openai_client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
 deepseek_client = AsyncOpenAI(api_key=settings.DEEPSEEK_API_KEY, base_url="https://api.deepseek.com/v1")
 
@@ -42,19 +41,15 @@ def get_portfolio_prompt(data: StudentPortfolioInput) -> str:
             entry = f"{item.title} by {item.organization}"
             certs.append(entry)
 
-    # Academic Details
     major_papers = [subject.paper_name for subject in data.major_papers]
     outcomes = [po.course_outcome for po in data.po_details]
     
-    # Activities & Engagement
     clubs = [c.club for c in data.club_details]
     abilities = [f"{a.ability} (Self-Rating: {a.value}%)" for a in data.ability_details]
     
-    # Achievements
     achievements = [f"Achievement: {a.achievement_item} Date:{format_date_str(a.achievement_date)} Achievement:{a.achievement_level} Remark:({a.remarks})" for a in data.achievement_details]
     activities = [f"Activity: {act.activity} Date:{format_date_str(act.activity_date)}" for act in data.activity_details]
 
-    # Psychometric Context (Nested JSON) ---
     psychometric_context = []
     grouped_psycho = defaultdict(list)
     
@@ -66,7 +61,6 @@ def get_portfolio_prompt(data: StudentPortfolioInput) -> str:
     for category, items in grouped_psycho.items():
         psychometric_context.append(f"Category '{category}': {'; '.join(items)}")
 
-    # --- Drive / Job Context ---
     drive_context = "General Portfolio (No specific job targeted)"
     if data.drive_data:
         drive_entries = []
@@ -75,7 +69,6 @@ def get_portfolio_prompt(data: StudentPortfolioInput) -> str:
             drive_entries.append(entry)
         drive_context = "; ".join(drive_entries)
 
-    # --- Schema Definition ---
     schema = """
     {
       "career_objective": "string (3-4 lines, crisp and personalized. If a Target Job is listed, tailor this specifically to that role/company.)",
@@ -93,7 +86,6 @@ def get_portfolio_prompt(data: StudentPortfolioInput) -> str:
     }
     """
 
-    # --- Construct Prompt ---
     prompt = f"""
     You are an expert HR Recruiter and Resume Writer. Analyze the student profile and the Target Job/Drive.
 
