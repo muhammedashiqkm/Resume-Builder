@@ -64,6 +64,19 @@
             border-collapse: collapse;
             margin-top: 15px;
             font-size: 0.9em;
+            page-break-inside: auto;
+            /* Allow table to break across pages */
+        }
+
+        tr {
+            page-break-inside: avoid;
+            /* Try to keep individual rows intact */
+            page-break-after: auto;
+        }
+
+        /* --- KEY FIX: Prevent Header Repetition --- */
+        thead {
+            display: table-row-group;
         }
 
         th,
@@ -92,7 +105,10 @@
 
     <h2>PERSONAL INFORMATION</h2>
     <p><strong>Name:</strong> {{ student.student_name }}</p>
+
+    {% if student.email %}
     <p><strong>Email:</strong> {{ student.email }}</p>
+    {% endif %}
 
 
     <h2>CAREER OBJECTIVE</h2>
@@ -100,18 +116,27 @@
 
     <h2>ACADEMIC SUMMARY</h2>
     <ul class="no-bullet">
+        {% if student.institution_name %}
         <li><strong>Institution:</strong> {{ student.institution_name }}</li>
+        {% endif %}
+        {% if student.course_name %}
         <li><strong>Course:</strong> {{ student.course_name }}</li>
+        {% endif %}
+        {% if student.batch %}
         <li><strong>Current Year:</strong> {{ student.batch }}</li>
+        {% endif %}
         {% if student.cgpa %}
         <li><strong>CGPA:</strong> {{ student.cgpa }}</li>
         {% endif %}
 
+        {% if student.major_papers %}
         <li><strong>Major Subjects:</strong>
             {% for subject in student.major_papers %}
             {{ subject.paper_name }}{% if not loop.last %}, {% endif %}
             {% endfor %}
         </li>
+        {% endif %}
+
 
         <li><strong>Course Outcomes:</strong> {{ ai.course_outcomes_sentence }}</li>
     </ul>
@@ -142,8 +167,7 @@
     <ul>
         {% for intern in internships %}
         <li>
-            <strong>{{ intern.title }} | {{ intern.organization }} ({{ intern.formatted_date_range }}) {% if
-                intern.organization %} - {{ intern.organization }}{% endif %}</strong>
+            <strong>{{ intern.title }} | {{ intern.organization }} ({{ intern.formatted_date_range }})</strong>
             <p>{{ intern.description }}</p>
         </li>
         {% endfor %}
@@ -182,22 +206,28 @@
     </ul>
     {% endif %}
 
-    {% if student.psychometric_details %}
+    {% if psychometric_data %}
     <h2>PSYCHOMETRIC PROFILE</h2>
     <table>
         <thead>
             <tr>
-                <th>Category</th>
-                <th>Description</th>
-                <th>Question/Data</th>
+                <th style="width: 25%;">Category / Section</th>
+                <th style="width: 35%;">Description</th>
+                <th style="width: 40%;">Analysis</th>
             </tr>
         </thead>
         <tbody>
-            {% for item in student.psychometric_details %}
+            {% for item in psychometric_data %}
             <tr>
-                <td>{{ item.category }}</td>
-                <td>{{ item.json_result.description }}</td>
-                <td>{{ item.json_result.representation }}</td>
+                <td>
+                    <strong>{{ item.category }}</strong>
+                    <br>
+                    <span style="font-size: 0.85em; color: #555;">
+                        {{ item.test_name }}
+                    </span>
+                </td>
+                <td>{{ item.description }}</td>
+                <td>{{ item.representation }}</td>
             </tr>
             {% endfor %}
         </tbody>
