@@ -1,9 +1,6 @@
 from pydantic import BaseModel, Field, ConfigDict
 from typing import List, Optional, Literal, Dict
 
-def to_camel(string: str) -> str:
-    return ''.join(word.capitalize() for word in string.split('_'))
-
 class BasePortfolioModel(BaseModel):
     """Base config to handle CamelCase JSON <-> snake_case Python"""
     model_config = ConfigDict(
@@ -11,36 +8,17 @@ class BasePortfolioModel(BaseModel):
         populate_by_name=True
     )
 
-
 class DriveData(BasePortfolioModel):
     company_name: str = Field(..., alias="CompanyName")
     job_name: str = Field(..., alias="JobName")
     designation: str = Field(..., alias="Designation")
 
-
-class PsychometricResult(BaseModel):
-    """
-    Represents the inner 'JsonResult' object containing the actual analysis.
-    """
-    category: str
-    description: str
-    representation: str = Field(..., alias="Representation")
-    instance_id: int
-
 class PsychometricCategoryWrapper(BaseModel):
-    category: str = Field(..., alias="Category")
-    json_result: PsychometricResult = Field(..., alias="JsonResult")
-
-    @property
-    def description(self) -> str:
-        return self.json_result.description if self.json_result else ""
-
-    @property
-    def Representation(self) -> str: 
-        return self.json_result.representation if self.json_result else ""
+    category: str = Field(..., alias="PsychometricTestCategory")
+    json_result: str = Field(..., alias="JsonResult")
     
-class ProjectInternshipCertDetail(BasePortfolioModel):
-    type: Literal["Project", "Internship", "Certificate"] = Field(..., alias="Type")
+class ProjectDetail(BasePortfolioModel):
+    type: Literal["Project"] = Field(default="Project", alias="Type")
     sub_type: Optional[str] = Field(None, alias="SubType")
     title: str = Field(..., alias="Title")
     description: str = Field(..., alias="Description")
@@ -49,7 +27,28 @@ class ProjectInternshipCertDetail(BasePortfolioModel):
     to_date: str = Field(..., alias="ToDate")
     submitted_on: Optional[str] = Field(None, alias="SubmittedOn")
     year: Optional[int] = Field(None, alias="Year")
-    studentname: Optional[str] = Field(None, alias="StudentName")
+
+class InternshipDetail(BasePortfolioModel):
+    type: Literal["Internship"] = Field(default="Internship", alias="Type")
+    sub_type: Optional[str] = Field(None, alias="SubType")
+    title: str = Field(..., alias="Title")
+    description: str = Field(..., alias="Description")
+    organization: Optional[str] = Field(None, alias="Organization")
+    from_date: str = Field(..., alias="FromDate")
+    to_date: str = Field(..., alias="ToDate")
+    submitted_on: Optional[str] = Field(None, alias="SubmittedOn")
+    year: Optional[int] = Field(None, alias="Year")
+
+class CertificationDetail(BasePortfolioModel):
+    type: Literal["Certification"] = Field(default="Certification", alias="Type")
+    sub_type: Optional[str] = Field(None, alias="SubType")
+    title: str = Field(..., alias="Title")
+    description: str = Field(..., alias="Description")
+    organization: Optional[str] = Field(None, alias="Organization")
+    from_date: str = Field(..., alias="FromDate")
+    to_date: str = Field(..., alias="ToDate")
+    submitted_on: Optional[str] = Field(None, alias="SubmittedOn")
+    year: Optional[int] = Field(None, alias="Year")
 
 class MajorPaper(BasePortfolioModel):
     paper_name: str = Field(..., alias="PaperName")
@@ -79,25 +78,30 @@ class ActivityDetail(BasePortfolioModel):
     academic_year: Optional[str] = Field(None, alias="AcademicYear")
 
 class StudentPortfolioInput(BasePortfolioModel):
-
     model: Literal["openai", "gemini", "deepseek"] = "gemini"
 
     student_name: str     = Field(..., alias="StudentName")
-    course_name: str      = Field(..., alias="CourseName")
-    institution_name: str = Field(..., alias="InstitutionName")
-    email: str            = Field(..., alias="Email")
-    batch: str            = Field(..., alias="Batch")
+    course_name: Optional[str]      = Field(..., alias="CourseName")
+    institution_name: Optional[str] = Field(..., alias="InstitutionName")
+    email: Optional[str]           = Field(..., alias="Email")
+    batch: Optional[str]            = Field(..., alias="Batch")
     cgpa: Optional[str]   = Field(None, alias="CGPA")
     course_id: Optional[int] = Field(None, alias="CourseID") 
-    
-    details_list: List[ProjectInternshipCertDetail] = Field(..., alias="StudentProjectInternshipCertificationDetailsForPortfolio")
-    major_papers: List[MajorPaper]                  = Field(..., alias="StudentMajorCourseDetailsForPortfolioData")
-    po_details: List[CourseOutcome]                 = Field(..., alias="StudentPODetailsForPortfolioData")
+    year_back_count: Optional[int] = Field(None, alias="YearBackCount")
+
+    projects: List[ProjectDetail] = Field(default=[], alias="StudentProjectDetailsForPortfolioData")
+    internships: List[InternshipDetail] = Field(default=[], alias="StudentInternshipDetailsForPortfolioData")
+    certifications: List[CertificationDetail] = Field(default=[], alias="StudentCertificationDetailsForPortfolioData")
+
+    major_papers: List[MajorPaper]                  = Field(default=[], alias="StudentMajorCourseDetailsForPortfolioData")
+    po_details: List[CourseOutcome]                 = Field(default=[], alias="StudentPODetailsForPortfolioData")
     club_details: List[ClubDetail]                  = Field(default=[], alias="StudentClubDetailsForPortfolioData")
     ability_details: List[AbilityDetail]            = Field(default=[], alias="StudentAbilityDetailsForPortfolioData")
     achievement_details: List[AchievementDetail]    = Field(default=[], alias="StudentAchievementDetailsForPortfolioData")
     activity_details: List[ActivityDetail]          = Field(default=[], alias="StudentActivityDetailsForPortfolioData")
-    psychometric_details: List[PsychometricCategoryWrapper] = Field(..., alias="StudentPsychometricDetailsForPortfolioData")
+    
+    psychometric_details: Optional[List[PsychometricCategoryWrapper]] = Field(default=[], alias="StudentPsychometricCategoryDetailsForPortfolioData")
+    
     drive_data: Optional[List[DriveData]] = Field(default=[], alias="DriveData")
 
 class AIContentOutput(BaseModel):
@@ -117,4 +121,3 @@ class PortfolioUrlRequest(BaseModel):
     model: Literal["openai", "gemini", "deepseek"] = "gemini"
     url: str = Field(..., alias="ProfileURL")
     drivedata: List[DriveData] = Field(default=[], alias="DriveData")
-    

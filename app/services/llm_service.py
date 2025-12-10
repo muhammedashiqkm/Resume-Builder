@@ -18,28 +18,28 @@ if settings.GEMINI_API_KEY:
 
 def get_portfolio_prompt(data: StudentPortfolioInput) -> str:
     
-    projects = []
-    internships = []
-    certs = []
+    projects_str = []
+    internships_str = []
+    certs_str = []
     
-    for item in data.details_list:
+    for item in data.projects:
+        start = format_date_str(item.from_date)
+        end = format_date_str(item.to_date)
+        subtype = f" ({item.sub_type})" if item.sub_type and item.sub_type.lower() != "none" else ""
+        title = f"{item.title}{subtype}"
+        entry = f"{title}: {item.description}"
+        projects_str.append(entry)
+
+    for item in data.internships:
         start = format_date_str(item.from_date)
         end = format_date_str(item.to_date)
         date_str = f"{start} - {end}" if start and end else ""
-        
-        if item.type == 'Project':
-            subtype = f" ({item.sub_type})" if item.sub_type and item.sub_type.lower() != "none" else ""
-            title = f"{item.title}{subtype}"
-            entry = f"{title}: {item.description}"
-            projects.append(entry)
-            
-        elif item.type == 'Internship':
-            entry = f"{item.title} at {item.organization} ({date_str}): {item.description}"
-            internships.append(entry)
-            
-        elif item.type == 'Certificate':
-            entry = f"{item.title} by {item.organization}"
-            certs.append(entry)
+        entry = f"{item.title} at {item.organization} ({date_str}): {item.description}"
+        internships_str.append(entry)
+
+    for item in data.certifications:
+        entry = f"{item.title} by {item.organization}"
+        certs_str.append(entry)
 
     major_papers = [subject.paper_name for subject in data.major_papers]
     outcomes = [po.course_outcome for po in data.po_details]
@@ -53,10 +53,24 @@ def get_portfolio_prompt(data: StudentPortfolioInput) -> str:
     psychometric_context = []
     grouped_psycho = defaultdict(list)
     
-    for item in data.psychometric_details:
-        if item.json_result:
-            details = f"Representation: {item.json_result.representation} | Context: {item.json_result.description}"
-            grouped_psycho[item.category].append(details)
+    if data.psychometric_details:
+        for item in data.psychometric_details:
+            try:
+                if not item.json_result:
+                    continue
+                    
+                result_data = json.loads(item.json_result)
+                sections = result_data.get("sections", [])
+                
+                for section in sections:
+                    sec_name = section.get("section", "Unknown")
+                    representation = section.get("representation", "")
+                    description = section.get("description", "")
+                    
+                    details = f"Section: {sec_name} | Representation: {representation}"
+                    grouped_psycho[item.category].append(details)
+            except Exception as e:
+                error_logger.warning(f"Failed to parse psychometric json_result for category {item.category}: {e}")
 
     for category, items in grouped_psycho.items():
         psychometric_context.append(f"Category '{category}': {'; '.join(items)}")
@@ -81,7 +95,7 @@ def get_portfolio_prompt(data: StudentPortfolioInput) -> str:
           "string"
       ] (Generate impressive bullet points from Achievements and Activities),
 
-      "rating": "integer (1-5 only). A suitability score based on how well the student's overall profile (major papers, projects, internships, certifications, clubs, achievements/activities, course outcomes, abilities, and psychometric/aptitude analysis) matches the 'Target Job/Drive' listed below."
+      "rating": "integer (1-5 only). A suitability score based on how well the student's overall profile matches the 'Target Job/Drive'."
 
     }
     """
@@ -95,9 +109,9 @@ def get_portfolio_prompt(data: StudentPortfolioInput) -> str:
     **Student Profile:**
     - Name: {data.student_name} ({data.course_name})
     - Major Papers Studied: {', '.join(major_papers)}
-    - Internships: {'; '.join(internships)}
-    - Projects: {'; '.join(projects)}
-    - Certifications: {'; '.join(certs)}
+    - Internships: {'; '.join(internships_str)}
+    - Projects: {'; '.join(projects_str)}
+    - Certifications: {'; '.join(certs_str)}
     - Active Clubs: {', '.join(clubs)}
     - Achievements/Activities: {'; '.join(achievements + activities)}
     - Key Course Outcomes: {'; '.join(outcomes)}
@@ -105,34 +119,25 @@ def get_portfolio_prompt(data: StudentPortfolioInput) -> str:
     - Psychometric/Aptitude Analysis: {' || '.join(psychometric_context)}
 
     **Instructions:**
-    1. **RATING (Crucial):** Evaluate how well the student fits the "Target Job/Drive" using the entire Student Profile:
-   - Consider: Major Papers, Projects, Internships, Certifications, Active Clubs, Achievements/Activities, Key Course Outcomes, Self-Reported Abilities (with their values), and Psychometric/Aptitude Analysis.
-   - If "General Portfolio (No specific job targeted)" is listed, rate based on general employability.
+    1. **RATING (Crucial):** Evaluate how well the student fits the "Target Job/Drive" using the entire Student Profile.
    - Use this scale:
      - **5** - Very strong overall match.
      - **4** - Good match with minor gaps.
-     - **3** - Moderate match (some relevant skills, clear gaps).
-     - **2** - Low match (few relevant skills or weak evidence).
+     - **3** - Moderate match.
+     - **2** - Low match.
      - **1** - Very low match.
-   - Return only an **integer**: `1`, `2`, `3`, `4`, or `5` (no decimals, no text, no “/5”).
-
+   - Return only an **integer**: `1`, `2`, `3`, `4`, or `5`.
 
     2. **CAREER OBJECTIVE:**
        • 3-4 lines, crisp and personalized.
        • **Tailor this specifically to the Target Job/Drive if provided.**
-       • Must reflect Major Papers + Projects + Internships + Certifications.
-       • Tone: professional, confident, future-oriented.
 
     3. **PORTFOLIO SUMMARY:**
        • 5-7 lines, holistic and clear.
        • Summarize academics, projects, internships, abilities, certificates, and activities.
-       • Highlight both technical and soft skills with brief examples.
-       • End with a short line showing readiness for industry roles.
 
     4. **SKILLS:**
-       Analyze the student's data and group detected skills into meaningful categories chosen by you.
-       • Keep category names short (e.g., "Technical", "Tools", "Soft Skills").
-       • Avoid duplicates.
+       Analyze the student's data and group detected skills into meaningful categories (e.g., "Technical", "Tools", "Soft Skills").
 
     **Output strictly JSON:**
     {schema}
