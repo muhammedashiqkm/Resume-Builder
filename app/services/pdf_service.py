@@ -69,14 +69,14 @@ def save_pdf_report(student_data: StudentPortfolioInput, ai_content: AIContentOu
             try:
                 if item.json_result:
                     parsed_result = json.loads(item.json_result)
-                    sections = parsed_result.get("sections", [])
                     
-                    for section in sections:
-                        psychometric_data.append({
-                            "category": item.category,      
-                            "test_name": section.get("section", ""), 
-                            "description": section.get("description", ""),
-                            "representation": section.get("representation", "")
+                    
+                    
+                    psychometric_data.append({
+                    "category": item.category,
+                    "test_name": parsed_result.get("test_name", ""),
+                    "description": parsed_result.get("description", ""),
+                    "representation": parsed_result.get("representation", "")
                         })
             except Exception as e:
                 error_logger.warning(f"Error parsing psychometric JSON for category {item.category}: {e}")
@@ -106,9 +106,10 @@ def save_pdf_report(student_data: StudentPortfolioInput, ai_content: AIContentOu
         
         safe_name = sanitize_filename(student_data.student_name)
         safe_institute = sanitize_filename(student_data.institution_name)
-        safe_email = sanitize_filename(student_data.email.replace("@", "_at_").replace(".", "_"))
+        safe_regno = sanitize_filename(student_data.RegisterNo)
 
-        filename = f"{safe_name}_{safe_institute}_{safe_email}.pdf"
+
+        filename = f"{safe_name}_{safe_institute}_{safe_regno}.pdf"
         file_path = os.path.join(REPORTS_DIR, filename)
 
         with open(file_path, 'wb') as f:

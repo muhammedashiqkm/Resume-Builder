@@ -84,6 +84,7 @@ class StudentPortfolioInput(BasePortfolioModel):
     course_name: Optional[str]      = Field(..., alias="CourseName")
     institution_name: Optional[str] = Field(..., alias="InstitutionName")
     email: Optional[str]           = Field(..., alias="Email")
+    RegisterNo: Optional[str] = Field(None, alias="RegisterNo")
     batch: Optional[str]            = Field(..., alias="Batch")
     cgpa: Optional[str]   = Field(None, alias="CGPA")
     course_id: Optional[int] = Field(None, alias="CourseID") 

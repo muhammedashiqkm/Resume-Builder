@@ -117,7 +117,8 @@ Generates a PDF portfolio based on the provided student data. The system sends t
      {
       "CompanyName": "Infosys",
       "JobName": "Power Programmer",
-      "Designation": "Python"
+      "Designation": "Python",
+      "StudentPlacementID": "453"
     }
   ]
 }
