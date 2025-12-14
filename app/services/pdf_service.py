@@ -52,7 +52,6 @@ def save_pdf_report(student_data: StudentPortfolioInput, ai_content: AIContentOu
         item_dict['formatted_date_range'] = f"{start} - {end}"
         processed_certs.append(item_dict)
 
-    # --- UPDATED PSYCHOMETRIC LOGIC ---
     psychometric_data = []
     if student_data.psychometric_details:
         for item in student_data.psychometric_details:
@@ -60,8 +59,6 @@ def save_pdf_report(student_data: StudentPortfolioInput, ai_content: AIContentOu
                 if item.json_result:
                     parsed_result = json.loads(item.json_result)
                     
-                    # CHANGED: Removed 'test_name' extraction.
-                    # Only extracting Category, Description, and Representation.
                     psychometric_data.append({
                         "category": item.category,
                         "description": parsed_result.get("description", ""),
@@ -70,7 +67,6 @@ def save_pdf_report(student_data: StudentPortfolioInput, ai_content: AIContentOu
             except Exception as e:
                 error_logger.warning(f"Error parsing psychometric JSON for category {item.category}: {e}")
                 continue
-    # ----------------------------------
 
     context = {
         "student": student_data,
@@ -97,7 +93,6 @@ def save_pdf_report(student_data: StudentPortfolioInput, ai_content: AIContentOu
         safe_institute = sanitize_filename(student_data.institution_name)
         safe_regno = sanitize_filename(student_data.RegisterNo)
         
-        # Look for the ID inside the FIRST item of drive_data
         placement_id = None
         if student_data.drive_data and len(student_data.drive_data) > 0:
             placement_id = student_data.drive_data[0].student_placement_id
