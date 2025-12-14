@@ -12,6 +12,7 @@ class DriveData(BasePortfolioModel):
     company_name: str = Field(..., alias="CompanyName")
     job_name: str = Field(..., alias="JobName")
     designation: str = Field(..., alias="Designation")
+    student_placement_id: str = Field(None, alias="StudentPlacementID")
 
 class PsychometricCategoryWrapper(BaseModel):
     category: str = Field(..., alias="PsychometricTestCategory")

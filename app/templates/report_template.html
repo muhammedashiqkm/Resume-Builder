@@ -208,30 +208,24 @@
 
     {% if psychometric_data %}
     <h2>PSYCHOMETRIC PROFILE</h2>
-<table>
-    <thead>
-        <tr>
-            <th style="width: 30%;">Category / Test</th>
-            <th style="width: 35%;">Description</th>
-            <th style="width: 35%;">Representation</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for item in psychometric_data %}
-        <tr>
-            <td>
-                <strong>{{ item.category }}</strong>
-                <br>
-                <span style="font-size: 0.85em; color: #555;">
-                    {{ item.test_name }}
-                </span>
-            </td>
-            <td>{{ item.description }}</td>
-            <td>{{ item.representation }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 25%;">Category</th>
+                <th style="width: 37.5%;">Description</th>
+                <th style="width: 37.5%;">Representation</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in psychometric_data %}
+            <tr>
+                <td><strong>{{ item.category }}</strong></td>
+                <td>{{ item.description }}</td>
+                <td>{{ item.representation }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
     {% endif %}
 
     <h2>PORTFOLIO SUMMARY</h2>

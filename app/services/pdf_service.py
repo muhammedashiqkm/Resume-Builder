@@ -19,21 +19,12 @@ if not os.path.exists(REPORTS_DIR):
     os.makedirs(REPORTS_DIR)
 
 def sanitize_filename(text: str) -> str:
-    """
-    Removes special characters to make strings safe for filenames.
-    Replaces spaces with underscores.
-    """
     if not text:
         return "unknown"
     safe_text = "".join(c for c in text if c.isalnum() or c in " _-").strip()
     return safe_text.replace(" ", "_")
 
 def save_pdf_report(student_data: StudentPortfolioInput, ai_content: AIContentOutput) -> str:
-    """
-    Generates a PDF. 
-    Filename is based on Name + Institution + Email.
-    Writing to the same filename automatically overwrites the previous version.
-    """
     
     processed_projects = []
     for item in student_data.projects:
@@ -41,10 +32,8 @@ def save_pdf_report(student_data: StudentPortfolioInput, ai_content: AIContentOu
         start = format_date_str(item.from_date)
         end = format_date_str(item.to_date)
         item_dict['formatted_date_range'] = f"{start} - {end}"
-        
         if item.sub_type and item.sub_type.lower() != "none":
             item_dict['title'] = f"{item.title} ({item.sub_type})"
-            
         processed_projects.append(item_dict)
 
     processed_internships = []
@@ -63,6 +52,7 @@ def save_pdf_report(student_data: StudentPortfolioInput, ai_content: AIContentOu
         item_dict['formatted_date_range'] = f"{start} - {end}"
         processed_certs.append(item_dict)
 
+    # --- UPDATED PSYCHOMETRIC LOGIC ---
     psychometric_data = []
     if student_data.psychometric_details:
         for item in student_data.psychometric_details:
@@ -70,17 +60,17 @@ def save_pdf_report(student_data: StudentPortfolioInput, ai_content: AIContentOu
                 if item.json_result:
                     parsed_result = json.loads(item.json_result)
                     
-                    
-                    
+                    # CHANGED: Removed 'test_name' extraction.
+                    # Only extracting Category, Description, and Representation.
                     psychometric_data.append({
-                    "category": item.category,
-                    "test_name": parsed_result.get("test_name", ""),
-                    "description": parsed_result.get("description", ""),
-                    "representation": parsed_result.get("representation", "")
-                        })
+                        "category": item.category,
+                        "description": parsed_result.get("description", ""),
+                        "representation": parsed_result.get("representation", "")
+                    })
             except Exception as e:
                 error_logger.warning(f"Error parsing psychometric JSON for category {item.category}: {e}")
                 continue
+    # ----------------------------------
 
     context = {
         "student": student_data,
@@ -90,7 +80,6 @@ def save_pdf_report(student_data: StudentPortfolioInput, ai_content: AIContentOu
         "certificates": processed_certs,
         "psychometric_data": psychometric_data,
     }
-
 
     html_out = template.render(context)
 
@@ -107,9 +96,18 @@ def save_pdf_report(student_data: StudentPortfolioInput, ai_content: AIContentOu
         safe_name = sanitize_filename(student_data.student_name)
         safe_institute = sanitize_filename(student_data.institution_name)
         safe_regno = sanitize_filename(student_data.RegisterNo)
+        
+        # Look for the ID inside the FIRST item of drive_data
+        placement_id = None
+        if student_data.drive_data and len(student_data.drive_data) > 0:
+            placement_id = student_data.drive_data[0].student_placement_id
 
+        if placement_id:
+            safe_pid = sanitize_filename(placement_id)
+            filename = f"{safe_name}_{safe_institute}_{safe_regno}_{safe_pid}.pdf"
+        else:
+            filename = f"{safe_name}_{safe_institute}_{safe_regno}.pdf"
 
-        filename = f"{safe_name}_{safe_institute}_{safe_regno}.pdf"
         file_path = os.path.join(REPORTS_DIR, filename)
 
         with open(file_path, 'wb') as f:

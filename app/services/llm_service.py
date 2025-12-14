@@ -60,14 +60,12 @@ def get_portfolio_prompt(data: StudentPortfolioInput) -> str:
                     continue
                     
                 result_data = json.loads(item.json_result)
-                sections = result_data.get("sections", [])
                 
-                for section in sections:
-                    sec_name = section.get("section", "Unknown")
-                    representation = section.get("representation", "")
-                    description = section.get("description", "")
-                    
-                    details = f"Section: {sec_name} | Representation: {representation}"
+                description = result_data.get("description", "")
+                representation = result_data.get("representation", "")
+                
+                if description or representation:
+                    details = f"Description: {description} | Representation: {representation}"
                     grouped_psycho[item.category].append(details)
             except Exception as e:
                 error_logger.warning(f"Failed to parse psychometric json_result for category {item.category}: {e}")
