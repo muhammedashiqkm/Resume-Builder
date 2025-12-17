@@ -99,9 +99,9 @@ def save_pdf_report(student_data: StudentPortfolioInput, ai_content: AIContentOu
 
         if placement_id:
             safe_pid = sanitize_filename(placement_id)
-            filename = f"{safe_name}_{safe_institute}_{safe_regno}_{safe_pid}.pdf"
+            filename = f"{safe_name}_{safe_regno}_{safe_institute}_{safe_pid}.pdf"
         else:
-            filename = f"{safe_name}_{safe_institute}_{safe_regno}.pdf"
+            filename = f"{safe_name}_{safe_regno}_{safe_institute}.pdf" 
 
         file_path = os.path.join(REPORTS_DIR, filename)
 
