@@ -9,3 +9,4 @@ google-generativeai
 pdfkit
 jinja2
 
+httpx

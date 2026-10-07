@@ -2,7 +2,10 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import Optional, List, Union
 
 class Settings(BaseSettings):
-    OPENAI_API_KEY: str
+    # Optional, like the other two: the portal asks for "gemini", and a key
+    # that is not configured should fail the one request that needs it, not
+    # stop the whole service from starting.
+    OPENAI_API_KEY: Optional[str] = None
     GEMINI_API_KEY: Optional[str] = None
     DEEPSEEK_API_KEY: Optional[str] = None
     

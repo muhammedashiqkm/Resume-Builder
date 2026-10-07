@@ -9,9 +9,17 @@ from app.models.report import StudentPortfolioInput, AIContentOutput
 from app.core.logging_config import app_logger, error_logger
 from app.core.utils import format_date_str
 
-openai_client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
-deepseek_client = AsyncOpenAI(api_key=settings.DEEPSEEK_API_KEY, base_url="https://api.deepseek.com/v1")
+# Each provider's client is built only when its key is set. The openai package
+# refuses an empty key outright, so building these unconditionally at import
+# stopped the service from starting on a Gemini-only .env - and DeepSeek, which
+# reuses that client, would have done the same with no DEEPSEEK_API_KEY.
+openai_client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY) if settings.OPENAI_API_KEY else None
+deepseek_client = (
+    AsyncOpenAI(api_key=settings.DEEPSEEK_API_KEY, base_url="https://api.deepseek.com/v1")
+    if settings.DEEPSEEK_API_KEY else None
+)
 
+gemini_model = None
 if settings.GEMINI_API_KEY:
     genai.configure(api_key=settings.GEMINI_API_KEY)
     gemini_model = genai.GenerativeModel(settings.GEMINI_MODEL_NAME)
@@ -156,6 +164,8 @@ async def generate_ai_content(student_data: StudentPortfolioInput) -> AIContentO
             response = await gemini_model.generate_content_async(prompt, generation_config={"response_mime_type": "application/json"})
             response_content = response.text.strip().removeprefix("```json").removesuffix("```")
         elif model_name == "openai":
+             if not openai_client:
+                 raise ValueError("OPENAI_API_KEY not found")
              response = await openai_client.chat.completions.create(
                 model=settings.OPENAI_MODEL_NAME, 
                 messages=[{"role": "user", "content": prompt}], 
@@ -163,6 +173,8 @@ async def generate_ai_content(student_data: StudentPortfolioInput) -> AIContentO
             )
              response_content = response.choices[0].message.content
         elif model_name == "deepseek":
+             if not deepseek_client:
+                 raise ValueError("DEEPSEEK_API_KEY not found")
              response = await deepseek_client.chat.completions.create(
                 model=settings.DEEPSEEK_MODEL_NAME, 
                 messages=[{"role": "user", "content": prompt}], 
