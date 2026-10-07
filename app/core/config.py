@@ -17,7 +17,15 @@ class Settings(BaseSettings):
     ADMIN_USERNAME: str
     ADMIN_PASSWORD: str
 
-    BASE_URL: str = "http://localhost:8000"
+    # Where the service listens. PORT is also what docker-compose publishes,
+    # so one line in .env moves both.
+    HOST: str = "0.0.0.0"
+    PORT: int = 5011
+
+    # The public address report links are built from - it goes into every
+    # report_url handed back to the portal, so it must match how the service
+    # is reached (behind nginx: https://psychometry.meshilogic.com/StudentProfile).
+    BASE_URL: str = "http://localhost:5011"
 
     model_config = SettingsConfigDict(
         env_file=".env", 

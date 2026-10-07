@@ -1,4 +1,7 @@
-FROM python:3.11-slim-bullseye
+# Debian 12. Debian 11 (bullseye) is past end of support: its security
+# packages moved to archive.debian.org, so apt-get install 404s and the build
+# fails - the same failure psychometric-reporter hit. wkhtmltopdf is 0.12.6 in both.
+FROM python:3.11-slim-bookworm
 
 ENV PYTHONUNBUFFERED=1
 
@@ -22,6 +25,9 @@ RUN pip install --no-cache-dir --upgrade pip && \
 COPY ./app ./app
 COPY main.py .
 
-EXPOSE 8000
+# The port comes from .env. Shell form on purpose: the exec form would hand
+# uvicorn the literal text ${PORT} instead of the number.
+ENV PORT=5011
+EXPOSE ${PORT}
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "3"]
+CMD uvicorn main:app --host 0.0.0.0 --port ${PORT:-5011} --workers 3

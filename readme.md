@@ -62,7 +62,7 @@ This FastAPI application generates professional PDF portfolios for students. It 
     ADMIN_PASSWORD=change_this_password
 
     # App Config
-    BASE_URL=http://localhost:8000
+    BASE_URL=http://localhost:5011
     BACKEND_CORS_ORIGINS=["http://localhost:3000"]
     ```
 
@@ -130,7 +130,7 @@ Returns the download URL for the generated PDF.
 ```json
 {
   "filename": "John_Doe_Portfolio.pdf",
-  "report_url": "http://localhost:8000/media/reports/John_Doe_Tech_Institute_of_Engineering_john_doe_at_example_com.pdf",
+  "report_url": "http://localhost:5011/media/reports/John_Doe_Tech_Institute_of_Engineering_john_doe_at_example_com.pdf",
   "rating": "4.3/5"
 }
 ```
